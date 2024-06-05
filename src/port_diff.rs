@@ -1,3 +1,5 @@
+mod rewrite;
+
 use std::{
     cell::{Ref, RefCell},
     rc::Rc,
@@ -187,6 +189,18 @@ impl<V, P> PortDiff<V, P> {
             EdgeEndType::Left => desc_map[index].left.push(descendant),
             EdgeEndType::Right => desc_map[index].right.push(descendant),
         }
+    }
+
+    /// TODO: Actually extract a valid graph with boundaries
+    pub fn extract(&self) -> Vec<PortEdge<V, P>>
+    where
+        V: Clone,
+        P: Clone,
+    {
+        if self.boundary_ports.is_empty() {
+            return self.edges.clone();
+        }
+        unimplemented!()
     }
 }
 
