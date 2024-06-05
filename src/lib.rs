@@ -5,13 +5,15 @@ mod unique_vertex;
 use std::fmt::Debug;
 
 pub use port_diff::PortDiff;
-use unique_vertex::UniqueVertex;
+pub use unique_vertex::UniqueVertex;
 
 /// A connection point for an edge
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Port<V, P> {
-    node: V,
-    port: P,
+    /// The node
+    pub node: V,
+    /// The port label
+    pub port: P,
 }
 
 /// An edge between two ports.
@@ -21,9 +23,9 @@ pub struct Port<V, P> {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PortEdge<V, P> {
     /// The source port
-    left: Port<V, P>,
+    pub left: Port<V, P>,
     /// The target port
-    right: Port<V, P>,
+    pub right: Port<V, P>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

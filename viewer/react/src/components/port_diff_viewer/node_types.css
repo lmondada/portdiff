@@ -1,0 +1,40 @@
+.node {
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.active {
+    border: 1px solid black;
+}
+
+.inactive {
+    border: 1px solid #808080;
+    color: #808080;
+}
+
+.handle {
+    position: absolute;
+}
+
+.inactive .react-flow__handle {
+    background: #808080;
+}
+
+.handle-top {
+    top: 0;
+}
+
+.handle-bottom {
+    bottom: 0;
+}
+
+.boundary-node {
+    width: 10px;
+    height: 10px;
+    background-color: black;
+    border-radius: 50%;
+}
+

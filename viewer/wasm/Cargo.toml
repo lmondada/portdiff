@@ -1,0 +1,19 @@
+[package]
+name = "wasm"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+wasm-bindgen = "0.2.79"
+portdiff = { path = "../.." }
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
+itertools = "0.13.0"
+getrandom = { version = "0.2.15", features = ["js"] }
+uuid = { version = "1.8.0", features = ["v4"] }
