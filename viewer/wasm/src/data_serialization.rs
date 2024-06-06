@@ -1,25 +1,25 @@
+use portdiff::UniqueVertex;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub(crate) struct Position {
-    x: isize,
-    y: isize,
-}
+use crate::{Port, PortEdge, PortLabel};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 struct InternalNodeData {
-    port_diff_id: String,
-    n_inputs: usize,
-    n_outputs: usize,
+    port_diff_id: Uuid,
     label: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 struct ExternalNodeData {
-    n_inputs: usize,
-    n_outputs: usize,
     label: String,
+}
+
+impl From<InternalNodeData> for ExternalNodeData {
+    fn from(data: InternalNodeData) -> Self {
+        let InternalNodeData { label, .. } = data;
+        ExternalNodeData { label }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -32,91 +32,121 @@ pub(crate) enum Node {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct InternalNode {
-    id: String,
-    position: Position,
+    id: Uuid,
     data: InternalNodeData,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct BoundaryNode {
-    id: String,
-    position: Position,
+    id: Uuid,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct ExternalNode {
-    id: String,
-    position: Position,
+    id: Uuid,
     data: ExternalNodeData,
 }
 
 impl Node {
-    pub(crate) fn new_internal(x: isize, y: isize) -> Self {
-        let id = Uuid::new_v4().to_string();
+    pub(crate) fn new_internal(id: Uuid, port_diff_id: Uuid) -> Self {
         Self::Internal(InternalNode {
-            id: id.clone(),
-            position: Position { x, y },
-            data: InternalNodeData {
-                port_diff_id: "0".to_string(),
-                n_inputs: 1,
-                n_outputs: 1,
-                label: id,
-            },
-        })
-    }
-
-    pub(crate) fn new_external(x: isize, y: isize) -> Self {
-        let id = Uuid::new_v4().to_string();
-        Self::External(ExternalNode {
-            id: id.clone(),
-            position: Position { x, y },
-            data: ExternalNodeData {
-                n_inputs: 1,
-                n_outputs: 1,
-                label: id,
-            },
-        })
-    }
-
-    pub(crate) fn new_boundary(x: isize, y: isize) -> Self {
-        let id = Uuid::new_v4().to_string();
-        Self::Boundary(BoundaryNode {
             id,
-            position: Position { x, y },
+            data: InternalNodeData {
+                port_diff_id,
+                label: id.to_string(),
+            },
         })
     }
 
-    pub(crate) fn id(&self) -> &str {
+    pub(crate) fn new_external(id: Uuid) -> Self {
+        Self::External(ExternalNode {
+            id,
+            data: ExternalNodeData {
+                label: id.to_string(),
+            },
+        })
+    }
+
+    pub(crate) fn new_boundary() -> Self {
+        let id = Uuid::new_v4();
+        Self::Boundary(BoundaryNode { id })
+    }
+
+    pub(crate) fn id(&self) -> Uuid {
         match self {
-            Self::Internal(node) => &node.id,
-            Self::External(node) => &node.id,
-            Self::Boundary(node) => &node.id,
+            Self::Internal(node) => node.id,
+            Self::External(node) => node.id,
+            Self::Boundary(node) => node.id,
         }
+    }
+
+    pub(crate) fn is_external(&self) -> bool {
+        matches!(self, Self::External(_))
+    }
+
+    pub(crate) fn is_internal(&self) -> bool {
+        matches!(self, Self::Internal(_))
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct Edge {
-    id: String,
-    source: String,
-    target: String,
+    pub(crate) id: Uuid,
+    pub(crate) source: Uuid,
+    pub(crate) source_handle: usize,
+    pub(crate) target: Uuid,
+    pub(crate) target_handle: usize,
 }
 
 impl Edge {
-    pub(crate) fn new(source: &Node, target: &Node) -> Self {
-        let id = Uuid::new_v4().to_string();
+    pub(crate) fn new(
+        source: Uuid,
+        source_handle: usize,
+        target: Uuid,
+        target_handle: usize,
+    ) -> Self {
+        let id = Uuid::new_v4();
         Self {
             id,
-            source: source.id().to_string(),
-            target: target.id().to_string(),
+            source,
+            target,
+            source_handle,
+            target_handle,
+        }
+    }
+}
+
+impl From<&PortEdge> for Edge {
+    fn from(edge: &PortEdge) -> Self {
+        Edge::new(
+            edge.left.node.id(),
+            edge.left.port.index(),
+            edge.right.node.id(),
+            edge.right.port.index(),
+        )
+    }
+}
+
+impl From<&Edge> for PortEdge {
+    fn from(edge: &Edge) -> Self {
+        PortEdge {
+            left: Port {
+                node: UniqueVertex::from_id(edge.source),
+                port: PortLabel::Out(edge.source_handle),
+            },
+            right: Port {
+                node: UniqueVertex::from_id(edge.target),
+                port: PortLabel::In(edge.target_handle),
+            },
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct Graph {
-    nodes: Vec<Node>,
-    edges: Vec<Edge>,
+    pub(crate) nodes: Vec<Node>,
+    pub(crate) edges: Vec<Edge>,
 }
 
 impl Graph {
@@ -128,28 +158,3 @@ impl Graph {
         Self { nodes, edges }
     }
 }
-
-// impl From<&[PortEdge]> for Graph {
-//     fn from(value: &[PortEdge]) -> Self {
-//         let nodes = value
-//             .iter()
-//             .flat_map(|edge| {
-//                 [
-//                     InternalNode::new(edge.left.node.id()),
-//                     InternalNode::new(edge.right.node.id()),
-//                 ]
-//             })
-//             .unique()
-//             .collect();
-//         let edges = value
-//             .iter()
-//             .enumerate()
-//             .map(|(i, edge)| Edge {
-//                 id: i.to_string(),
-//                 source: edge.left.node.id().to_string(),
-//                 target: edge.right.node.id().to_string(),
-//             })
-//             .collect();
-//         Graph { nodes, edges }
-//     }
-// }

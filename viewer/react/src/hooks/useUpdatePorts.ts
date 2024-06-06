@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Edge, useUpdateNodeInternals } from "reactflow";
-import { Node } from "../wasm_api";
+import { WasmNode } from "../wasm_api";
 
 /**
  * Custom hook to update the ports of a node in the React Flow diagram.
@@ -8,7 +8,7 @@ import { Node } from "../wasm_api";
  * This hook ensures that there is always at least one free input and output port.
  */
 function useUpdatePorts(
-    nodes: Node[],
+    nodes: WasmNode[],
     edges: Edge[],
     { addInputPort, addOutputPort }: { addInputPort: (id: string) => void, addOutputPort: (id: string) => void }
 ) {

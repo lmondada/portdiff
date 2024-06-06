@@ -1,11 +1,11 @@
 import { XYPosition } from "reactflow";
 import { useMemo } from "react";
 import { Edge } from "reactflow";
-import { Node, node_type_name } from "./wasm_api";
+import { PlacedWasmNode } from "./wasm_api";
 
 
 export function removeBoundary(
-    nodes: Node[],
+    nodes: PlacedWasmNode[],
     edges: Edge[],
 ) {
     let boundaryEnds: { [key: string]: { source: string | undefined, target: string | undefined } } = {};

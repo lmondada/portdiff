@@ -10,34 +10,34 @@ import ReactFlow, {
     Panel,
     ReactFlowInstance,
     SelectionMode,
-    addEdge,
     applyEdgeChanges,
     applyNodeChanges,
 } from "reactflow";
 
 import EditModeButton from "./port_diff_viewer/EditModeButton";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { nodeTypes } from "./port_diff_viewer/node_types";
 import UpdatePorts from "./port_diff_viewer/UpdatePorts";
-import { createGraph } from "../wasm_api";
-import useEditModeHandlers from "../hooks/useEditModeHandlers";
-import { removeBoundary } from "../boundary";
+import usePortDiffState from "../hooks/usePortDiffState";
 
 function PortDiffViewer() {
-    const [isEditMode, setIsEditMode] = useState(false);
-    let initGraph = createGraph();
-    const [nodes, setNodes] = useState(initGraph.nodes);
-    const [edges, setEdges] = useState(initGraph.edges);
-
-    const { nodesNoBoundary, edgesNoBoundary } = useMemo(() => {
-        return removeBoundary(nodes, edges);
-    }, [nodes, edges]);
+    const {
+        isEditMode,
+        toggleEditMode,
+        edit_handlers,
+        view_handlers,
+        nodes,
+        edges,
+        setNodes,
+        nodesNoBoundary,
+        edgesNoBoundary,
+    } = usePortDiffState();
 
     // Pressing E toggles edit mode
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "e" || event.key === "E") {
-                setIsEditMode((prevMode) => !prevMode);
+                toggleEditMode();
             }
         };
 
@@ -46,15 +46,6 @@ function PortDiffViewer() {
             window.removeEventListener("keydown", handleKeyDown);
         };
     }, []);
-
-    // Event handlers for modifying the graph in edit mode
-    const edit_handlers = useEditModeHandlers({
-        nodes,
-        edges,
-        setNodes,
-        setEdges,
-    });
-    const view_handlers = {};
 
     const bg_opts = pick_background(isEditMode);
     const flow_opts = pick_flow_options(isEditMode);
@@ -73,7 +64,7 @@ function PortDiffViewer() {
                 <Panel position="top-right">
                     <EditModeButton
                         isEditMode={isEditMode}
-                        toggleEditMode={() => setIsEditMode(!isEditMode)}
+                        toggleEditMode={toggleEditMode}
                     />
                 </Panel>
                 <UpdatePorts nodes={nodes} edges={edges} setNodes={setNodes} />

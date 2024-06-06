@@ -8,7 +8,7 @@ pub use port_diff::PortDiff;
 pub use unique_vertex::UniqueVertex;
 
 /// A connection point for an edge
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Port<V, P> {
     /// The node
     pub node: V,

@@ -20,7 +20,7 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({
                 cursor: "pointer",
             }}
         >
-            {isEditMode ? "Leave Edit Mode" : "Enter Edit Mode"}
+            {isEditMode ? "Commit & Leave Edit Mode" : "Enter Edit Mode"}
         </button>
     );
 };

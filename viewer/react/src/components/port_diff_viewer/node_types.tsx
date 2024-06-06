@@ -34,6 +34,16 @@ function ExternalNodeViewer({ data }: { data: ExternalNodeData }) {
     return <NodeViewer data={data} type="External" />;
 }
 
+function simpleHash(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+}
+
 function NodeViewer({
     data,
     type,
@@ -48,8 +58,13 @@ function NodeViewer({
         left: i * 10 - 5 * (data.n_outputs - 1),
     }));
     let is_active = type === "Internal";
+    let className = "node";
+    className += is_active ? " active" : " inactive nodrag";
+    if ("port_diff_id" in data && data.port_diff_id) {
+        className += ` color-palette-${simpleHash(data.port_diff_id) % 10}`;
+    }
     return (
-        <div className={"node " + (is_active ? "active" : "inactive nodrag")}>
+        <div className={className}>
             {input_pos.map((pos, i) => (
                 <Handle
                     type="target"

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 
 import PortDiffViewer from "./components/PortDiffViewer";
 
@@ -8,11 +8,7 @@ import "reactflow/dist/style.css";
 import DragDivider from "./components/DragDivider";
 
 const App = () => {
-    const [widthPercentage, setWidthPercentage] = React.useState(50);
-
-    const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setWidthPercentage(Number(event.target.value));
-    };
+    const [widthPercentage, setWidthPercentage] = React.useState(70);
 
     return (
         <div style={{ display: "flex", width: "100vw", height: "100vh" }}>

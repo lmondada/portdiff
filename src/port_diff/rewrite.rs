@@ -7,8 +7,20 @@ type V = UniqueVertex;
 impl<P: Clone + Ord> PortDiff<V, P> {
     /// Replace the internal edges with `new_edges`.
     ///
-    /// All vertices with a changed set of ports are replace with new vertices.
-    pub fn rewrite(&self, new_edges: &[PortEdge<V, P>]) -> Self {
+    /// All vertices with a changed set of ports are replaced with new vertices.
+    ///
+    /// Optionally, indicate new boundary ports. The set of new boundary ports
+    /// must be of the same length. If a boundary port is `None`, the existing
+    /// boundary port is retained.
+    pub fn rewrite(
+        &self,
+        new_edges: &[PortEdge<V, P>],
+        new_boundary_ports: Vec<Option<Port<V, P>>>,
+    ) -> Result<Self, String> {
+        if new_boundary_ports.len() != self.boundary_ports.len() {
+            return Err("Mismatching number of boundary ports".to_string());
+        }
+
         // Get port sets to compare
         let new_ports = get_port_lists(new_edges);
         let curr_ports = get_port_lists(self.edges.iter());
@@ -39,14 +51,20 @@ impl<P: Clone + Ord> PortDiff<V, P> {
         });
 
         // Create new boundary ports
-        let boundary_ports = self.boundary_ports.iter().map(|p| new_port(p)).collect();
+        let boundary_ports = self
+            .boundary_ports
+            .iter()
+            .zip(&new_boundary_ports)
+            .map(|(p, new_p)| new_p.as_ref().unwrap_or(p))
+            .map(new_port)
+            .collect();
 
-        Self {
+        Ok(Self {
             edges: new_edges.collect(),
             boundary_ports,
             boundary_anc: self.boundary_anc.clone(),
             boundary_desc: self.boundary_desc.clone(),
-        }
+        })
     }
 }
 

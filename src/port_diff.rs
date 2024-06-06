@@ -2,6 +2,7 @@ mod rewrite;
 
 use std::{
     cell::{Ref, RefCell},
+    hash::Hash,
     rc::Rc,
 };
 
@@ -95,6 +96,24 @@ impl<V: Eq + Clone + Ord, P: Clone> PortDiff<V, P> {
             })
     }
 
+    pub fn extract(&self) -> Vec<PortEdge<V, P>>
+    where
+        V: Clone,
+        P: Clone,
+    {
+        if self.boundary_ports.is_empty() {
+            return self.edges.clone();
+        }
+        let mut expanded = Rc::new(self.clone());
+        while let Some(boundary) = expanded.boundary_edges().next() {
+            let Some(new_expanded) = expanded.expand(boundary).next() else {
+                continue;
+            };
+            expanded = new_expanded;
+        }
+        expanded.edges.clone()
+    }
+
     /// Traverse a boundary edge and list all possible opposite edge ends
     fn find_opposite_end(
         &self,
@@ -137,6 +156,17 @@ impl<V, P> PortDiff<V, P> {
     pub fn internal_edge(&self, edge: &InternalEdge) -> &PortEdge<V, P> {
         let &InternalEdge(index) = edge;
         &self.edges[index]
+    }
+
+    pub fn vertices(&self) -> impl Iterator<Item = &V>
+    where
+        V: Eq + Hash,
+    {
+        self.edges
+            .iter()
+            .flat_map(|e| [&e.left.node, &e.right.node])
+            .chain(self.boundary_ports.iter().map(|p| &p.node))
+            .unique()
     }
 
     fn get_ancestor_edge(&self, edge: &BoundaryEdge) -> &AncestorEdge<V, P> {
@@ -189,18 +219,6 @@ impl<V, P> PortDiff<V, P> {
             EdgeEndType::Left => desc_map[index].left.push(descendant),
             EdgeEndType::Right => desc_map[index].right.push(descendant),
         }
-    }
-
-    /// TODO: Actually extract a valid graph with boundaries
-    pub fn extract(&self) -> Vec<PortEdge<V, P>>
-    where
-        V: Clone,
-        P: Clone,
-    {
-        if self.boundary_ports.is_empty() {
-            return self.edges.clone();
-        }
-        unimplemented!()
     }
 }
 

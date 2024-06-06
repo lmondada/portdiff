@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.13.0"
-uuid = { version = "1.8.0", features = ["v4"] }
+uuid = { version = "1.8.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
 rstest = "0.21.0"

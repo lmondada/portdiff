@@ -2,16 +2,16 @@ import { Edge } from "reactflow";
 import { create } from "mutative";
 import useUpdatePorts from "../../hooks/useUpdatePorts";
 import { Dispatch, SetStateAction, useCallback } from "react";
-import { InternalNodeData, Node } from "../../wasm_api";
+import { PlacedWasmNode } from "../../wasm_api";
 
 function UpdatePorts({
     nodes,
     edges,
     setNodes,
 }: {
-    nodes: Node[];
+    nodes: PlacedWasmNode[];
     edges: Edge[];
-    setNodes: Dispatch<SetStateAction<Node[]>>;
+    setNodes: Dispatch<SetStateAction<PlacedWasmNode[]>>;
 }) {
     const addInputPort = useCallback(
         (id: string) => {
