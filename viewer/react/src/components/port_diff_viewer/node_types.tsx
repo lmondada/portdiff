@@ -41,7 +41,7 @@ function simpleHash(str: string): number {
         hash = (hash << 5) - hash + char;
         hash |= 0; // Convert to 32bit integer
     }
-    return hash;
+    return hash >>> 0;
 }
 
 function NodeViewer({
@@ -60,8 +60,9 @@ function NodeViewer({
     let is_active = type === "Internal";
     let className = "node";
     className += is_active ? " active" : " inactive nodrag";
+    // let color = "";
     if ("port_diff_id" in data && data.port_diff_id) {
-        className += ` color-palette-${simpleHash(data.port_diff_id) % 10}`;
+        className += ` color-palette-${simpleHash(data.port_diff_id) % 9}`;
     }
     return (
         <div className={className}>

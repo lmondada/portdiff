@@ -76,6 +76,6 @@
 
 .selected > .node.active  {
     border: 1px solid rgba(4, 4, 136, 0.964);
-    background-color: rgb(210, 211, 255);
+    filter: brightness(90%);
 }
 
