@@ -31,7 +31,7 @@ export function place_nodes(g: WasmGraph): PlacedWasmNode[] {
                 const x = position.x * 3;
                 const y = position.y * 3;
 
-                return { ...node, position: { x, y } };
+                return { ...node, position: { x, y }, selected: false };
             }),
             edges,
         };

@@ -1,6 +1,8 @@
-use std::collections::BTreeMap;
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
-use crate::{Port, PortDiff, PortEdge, UniqueVertex};
+use itertools::Itertools;
+
+use crate::{edges::DescendantEdges, Port, PortDiff, PortEdge, UniqueVertex};
 
 type V = UniqueVertex;
 
@@ -16,9 +18,12 @@ impl<P: Clone + Ord> PortDiff<V, P> {
         &self,
         new_edges: &[PortEdge<V, P>],
         new_boundary_ports: Vec<Option<Port<V, P>>>,
-    ) -> Result<Self, String> {
+    ) -> Result<Rc<Self>, String> {
         if new_boundary_ports.len() != self.boundary_ports.len() {
             return Err("Mismatching number of boundary ports".to_string());
+        }
+        if self.has_any_descendants() {
+            return Err("Cannot rewrite port diff with descendants".to_string());
         }
 
         // Get port sets to compare
@@ -30,7 +35,7 @@ impl<P: Clone + Ord> PortDiff<V, P> {
         for (&curr_v, curr_ports) in curr_ports.iter() {
             let new_ports = new_ports.get(&curr_v);
             if Some(curr_ports) != new_ports {
-                let new_v = UniqueVertex::new();
+                let new_v = UniqueVertex::new_unsafe();
                 new_vertices.insert(curr_v, new_v);
             }
         }
@@ -45,10 +50,14 @@ impl<P: Clone + Ord> PortDiff<V, P> {
         };
 
         // Create the new edges
-        let new_edges = new_edges.iter().map(|e| PortEdge {
-            left: new_port(&e.left),
-            right: new_port(&e.right),
-        });
+        let new_edges = new_edges
+            .iter()
+            .map(|e| PortEdge {
+                left: new_port(&e.left),
+                right: new_port(&e.right),
+            })
+            .collect_vec();
+        let boundary_desc = RefCell::new(vec![DescendantEdges::default(); new_edges.len()]);
 
         // Create new boundary ports
         let boundary_ports = self
@@ -59,12 +68,12 @@ impl<P: Clone + Ord> PortDiff<V, P> {
             .map(new_port)
             .collect();
 
-        Ok(Self {
-            edges: new_edges.collect(),
+        Ok(Rc::new(Self {
+            edges: new_edges,
             boundary_ports,
             boundary_anc: self.boundary_anc.clone(),
-            boundary_desc: self.boundary_desc.clone(),
-        })
+            boundary_desc,
+        }))
     }
 }
 

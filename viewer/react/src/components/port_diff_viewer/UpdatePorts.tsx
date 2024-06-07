@@ -1,53 +1,19 @@
-import { Edge } from "reactflow";
-import { create } from "mutative";
-import useUpdatePorts from "../../hooks/useUpdatePorts";
-import { Dispatch, SetStateAction, useCallback } from "react";
-import { PlacedWasmNode } from "../../wasm_api";
+import { useUpdateNodeInternals } from "reactflow";
+
+type UpdatePortsProps = {
+    updatedPortCounts: string[];
+    resetUpdatedPortCounts: () => void;
+};
 
 function UpdatePorts({
-    nodes,
-    edges,
-    setNodes,
-}: {
-    nodes: PlacedWasmNode[];
-    edges: Edge[];
-    setNodes: Dispatch<SetStateAction<PlacedWasmNode[]>>;
-}) {
-    const addInputPort = useCallback(
-        (id: string) => {
-            setNodes((prevNodes) => {
-                return prevNodes.map((node) => {
-                    if (node.id === id && node.type !== "Boundary") {
-                        return create(node, (draft) => {
-                            draft.data.n_inputs = node.data.n_inputs + 1;
-                        });
-                    } else {
-                        return node;
-                    }
-                });
-            });
-        },
-        [nodes, edges, setNodes],
-    );
-
-    const addOutputPort = useCallback(
-        (id: string) => {
-            setNodes((prevNodes) => {
-                return prevNodes.map((node) => {
-                    if (node.id === id && node.type !== "Boundary") {
-                        return create(node, (draft) => {
-                            draft.data.n_outputs = node.data.n_outputs + 1;
-                        });
-                    } else {
-                        return node;
-                    }
-                });
-            });
-        },
-        [nodes, edges, setNodes],
-    );
-
-    useUpdatePorts(nodes, edges, { addInputPort, addOutputPort });
+    updatedPortCounts,
+    resetUpdatedPortCounts,
+}: UpdatePortsProps) {
+    const updateNodeInternals = useUpdateNodeInternals();
+    if (updatedPortCounts.length > 0) {
+        updateNodeInternals(updatedPortCounts);
+        resetUpdatedPortCounts();
+    }
     return <></>;
 }
 

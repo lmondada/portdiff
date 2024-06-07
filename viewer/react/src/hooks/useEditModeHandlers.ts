@@ -54,24 +54,27 @@ function useEditModeHandlers({
                         color: undefined,
                     },
                     type: "Internal" as const,
+                    selected: false,
                 };
                 setNodes((prevNodes) => [...prevNodes, newNode]);
             }
         },
-        [reactFlowInstance, nodes],
+        [reactFlowInstance]
     );
 
     const onInit = useCallback(setReactFlowInstance, []);
     const onNodesChange = useCallback((changes: NodeChange[]) => {
-        const internalChanges = filterInternalNodeChanges(changes, nodes);
         setNodes((nds) => {
+            const internalChanges = filterInternalNodeChanges(changes, nds);
             return applyNodeChanges(internalChanges, nds) as PlacedWasmNode[];
         });
     }, []);
     const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-        let internalChanges = filterInternalEdgeChanges(changes, edges, nodes);
-        setEdges((eds) => applyEdgeChanges(internalChanges, eds) as PlacedWasmEdge[]);
-    }, []);
+        setEdges((eds) => {
+            let internalChanges = filterInternalEdgeChanges(changes, eds, nodes);
+            return applyEdgeChanges(internalChanges, eds) as PlacedWasmEdge[]
+        });
+    }, [nodes]);
     const onConnect = useCallback((conn: Connection) => {
         const edge = {
             id: uuid(),
@@ -79,7 +82,7 @@ function useEditModeHandlers({
         } as Edge;
         const edgeAdds = [{ item: edge, type: "add" as const }];
         onEdgesChange(edgeAdds);
-    }, []);
+    }, [onEdgesChange]);
     const isValidConnection = useCallback(
         (params: Connection) => {
             const sourceNode = nodes.find((node) => node.id === params.source);

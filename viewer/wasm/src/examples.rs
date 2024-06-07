@@ -5,8 +5,10 @@ use portdiff::UniqueVertex;
 
 use crate::{Port, PortDiff, PortEdge, PortLabel};
 
-pub(crate) fn port_diff() -> Rc<PortDiff> {
-    let v = (0..(3 + 2 + 3)).map(|_| UniqueVertex::new()).collect_vec();
+pub fn port_diff() -> Rc<PortDiff> {
+    let v = (0..(3 + 2 + 3))
+        .map(|_| UniqueVertex::new_unsafe())
+        .collect_vec();
     let create_edge = |src, src_port, tgt, tgt_port| PortEdge {
         left: Port {
             node: v[src],

@@ -35,6 +35,16 @@ pub struct BoundaryEdge(pub(super) usize);
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct InternalEdge(pub(super) usize);
 
+impl InternalEdge {
+    pub(super) fn to_left_end(self) -> EdgeEnd {
+        EdgeEnd::I(self, EdgeEndType::Left)
+    }
+
+    pub(super) fn to_right_end(self) -> EdgeEnd {
+        EdgeEnd::I(self, EdgeEndType::Right)
+    }
+}
+
 #[derive(Clone)]
 pub(super) struct AncestorEdge<V, P> {
     owner: Rc<PortDiff<V, P>>,
@@ -160,5 +170,9 @@ impl<V, P> DescendantEdges<V, P> {
     pub(super) fn remove_empty_refs(&mut self) {
         self.left.retain(|e| e.owner.upgrade().is_some());
         self.right.retain(|e| e.owner.upgrade().is_some());
+    }
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.left.is_empty() && self.right.is_empty()
     }
 }

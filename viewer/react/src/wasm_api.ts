@@ -2,7 +2,7 @@ import { Edge, XYPosition } from "reactflow";
 
 export const node_type_name = "portdiff" as const;
 
-import { init_app, rewrite } from "wasm";
+import { init_app, rewrite, select_nodes } from "wasm";
 import place_graph from "./place_graph";
 
 export interface InternalNodeData {
@@ -38,7 +38,7 @@ export interface ExternalNode {
 }
 
 export type WasmNode = InternalNode | BoundaryNode | ExternalNode;
-export type PlacedWasmNode = WasmNode & { position: XYPosition };
+export type PlacedWasmNode = WasmNode & { position: XYPosition, selected: boolean };
 export interface WasmEdge {
     id: string;
     source: string;
@@ -94,9 +94,18 @@ export function initApp(): PlacedWasmGraph {
 }
 
 export function rewriteGraph(edges: WasmEdge[]): WasmGraph {
+    console.log("rewrite:", JSON.stringify(edges));
     const res = rewrite(JSON.stringify(edges));
     const g = JSON.parse(res);
+    console.log("=>", g);
     return g;
 }
 
+export function selectNodes(nodeIds: Set<string>): WasmGraph {
+    console.log(" select:", JSON.stringify(Array.from(nodeIds)));
+    const res = select_nodes(JSON.stringify(Array.from(nodeIds)));
+    const g = JSON.parse(res);
+    console.log(" =>", g);
+    return g;
+}
 

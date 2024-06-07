@@ -1,36 +1,32 @@
 import ReactFlow, {
     Background,
     BackgroundVariant,
-    Connection,
     Controls,
-    Edge,
-    EdgeChange,
-    NodeChange,
-    NodeTypes,
     Panel,
-    ReactFlowInstance,
     SelectionMode,
-    applyEdgeChanges,
-    applyNodeChanges,
 } from "reactflow";
 
 import EditModeButton from "./port_diff_viewer/EditModeButton";
 import { useEffect } from "react";
 import { nodeTypes } from "./port_diff_viewer/node_types";
-import UpdatePorts from "./port_diff_viewer/UpdatePorts";
 import usePortDiffState from "../hooks/usePortDiffState";
+import CommitButton from "./port_diff_viewer/CommitButton";
+import UpdatePorts from "./port_diff_viewer/UpdatePorts";
 
 function PortDiffViewer() {
     const {
         isEditMode,
         toggleEditMode,
+        isCommitted,
+        commitSelection,
         edit_handlers,
         view_handlers,
         nodes,
         edges,
-        setNodes,
         nodesNoBoundary,
         edgesNoBoundary,
+        updatedPortCounts,
+        resetUpdatedPortCounts,
     } = usePortDiffState();
 
     // Pressing E toggles edit mode
@@ -62,12 +58,18 @@ function PortDiffViewer() {
                 <Background {...bg_opts} />
                 <Controls />
                 <Panel position="top-right">
+                    {!isCommitted ? (
+                        <CommitButton onClick={commitSelection} />
+                    ) : null}
                     <EditModeButton
                         isEditMode={isEditMode}
                         toggleEditMode={toggleEditMode}
                     />
                 </Panel>
-                <UpdatePorts nodes={nodes} edges={edges} setNodes={setNodes} />
+                <UpdatePorts
+                    updatedPortCounts={updatedPortCounts}
+                    resetUpdatedPortCounts={resetUpdatedPortCounts}
+                />
             </ReactFlow>
         </div>
     );

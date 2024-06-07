@@ -1,4 +1,10 @@
-import { Handle, Position, Node, NodeTypes } from "reactflow";
+import {
+    Handle,
+    Position,
+    Node,
+    NodeTypes,
+    useUpdateNodeInternals,
+} from "reactflow";
 import "./node_types.css";
 import { ExternalNodeData, InternalNodeData } from "../../wasm_api";
 
@@ -60,7 +66,6 @@ function NodeViewer({
     let is_active = type === "Internal";
     let className = "node";
     className += is_active ? " active" : " inactive nodrag";
-    // let color = "";
     if ("port_diff_id" in data && data.port_diff_id) {
         className += ` color-palette-${simpleHash(data.port_diff_id) % 9}`;
     }
