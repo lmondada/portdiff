@@ -1,11 +1,9 @@
-use std::rc::Rc;
-
 use itertools::Itertools;
 use portdiff::UniqueVertex;
 
 use crate::{Port, PortDiff, PortEdge, PortLabel};
 
-pub fn port_diff() -> Rc<PortDiff> {
+pub fn port_diff() -> PortDiff {
     let v = (0..(3 + 2 + 3))
         .map(|_| UniqueVertex::new_unsafe())
         .collect_vec();

@@ -1,7 +1,6 @@
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     iter::repeat_with,
-    rc::Rc,
 };
 
 use itertools::Itertools;
@@ -15,14 +14,14 @@ use crate::{
 };
 
 pub(crate) struct AppState {
-    current: Rc<PortDiff>,
-    committed: HashMap<Uuid, Rc<PortDiff>>,
+    current: PortDiff,
+    committed: HashMap<Uuid, PortDiff>,
     vertex_origin: HashMap<Uuid, Uuid>,
     current_boundary: Vec<Uuid>,
 }
 
 impl AppState {
-    fn new(init_diff: Rc<PortDiff>) -> Self {
+    fn new(init_diff: PortDiff) -> Self {
         let all_port_diffs = HashMap::new();
         let vertex_origin = HashMap::new();
         let current_boundary = Vec::new();
@@ -34,7 +33,7 @@ impl AppState {
         }
     }
 
-    pub(crate) fn commit(&mut self, port_diff: Rc<PortDiff>) -> Uuid {
+    pub(crate) fn commit(&mut self, port_diff: PortDiff) -> Uuid {
         let id = Uuid::new_v4();
         for v in port_diff.vertices() {
             if !self.vertex_origin.contains_key(&v.id()) {
@@ -45,6 +44,14 @@ impl AppState {
         id
     }
 
+    pub(crate) fn committed(&self) -> &HashMap<Uuid, PortDiff> {
+        &self.committed
+    }
+
+    pub(crate) fn vertex_origin(&self) -> &HashMap<Uuid, Uuid> {
+        &self.vertex_origin
+    }
+
     pub(crate) fn init() -> Self {
         let init_diff = examples::port_diff();
         let mut ret = Self::new(init_diff);
@@ -52,7 +59,7 @@ impl AppState {
         ret
     }
 
-    pub(crate) fn current(&self) -> &Rc<PortDiff> {
+    pub(crate) fn current(&self) -> &PortDiff {
         &self.current
     }
 
@@ -60,14 +67,14 @@ impl AppState {
         self.commit(self.current.clone())
     }
 
-    pub(crate) fn set_current(&mut self, diff: Rc<PortDiff>) {
+    pub(crate) fn set_current(&mut self, diff: PortDiff) {
         self.current_boundary = repeat_with(Uuid::new_v4)
             .take(diff.n_boundary_edges())
             .collect_vec();
         self.current = diff;
     }
 
-    pub(crate) fn to_json(&mut self) -> Result<String, String> {
+    pub(crate) fn to_json(&self) -> Result<String, String> {
         let g = self.convert_to_graph(self.current())?;
         Ok(g.to_json())
     }

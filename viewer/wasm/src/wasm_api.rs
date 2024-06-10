@@ -27,7 +27,7 @@ fn app_state_mut<'a>() -> &'a mut AppState {
 
 #[wasm_bindgen]
 pub fn init_app() -> Result<String, String> {
-    app_state_mut().to_json()
+    app_state().to_json()
 }
 
 #[wasm_bindgen]
@@ -41,7 +41,7 @@ pub fn rewrite(edges: String) -> Result<String, String> {
     };
     app_state_mut().set_current(new_diff);
     app_state_mut().commit_current();
-    app_state_mut().to_json()
+    app_state().to_json()
 }
 
 #[wasm_bindgen]
@@ -53,7 +53,44 @@ pub fn select_nodes(node_ids: String) -> Result<String, String> {
     let new_diff = PortDiff::with_nodes(node_ids, app_state().current());
     app_state_mut().set_current(new_diff);
     app_state_mut().commit_current();
-    app_state_mut().to_json()
+    app_state().to_json()
+}
+
+#[wasm_bindgen]
+pub fn hierarchy() -> Result<String, String> {
+    let edges = app_state().hierarchy();
+    serde_json::to_string(&edges).map_err(|_| "Error serializing hierarchy".to_string())
+}
+
+#[wasm_bindgen]
+pub fn select_diffs(diff_ids: String) -> Result<String, String> {
+    let Ok(diff_ids): Result<Vec<Uuid>, _> = serde_json::from_str(&diff_ids) else {
+        return Err("Error parsing diff ids".to_string());
+    };
+    let diffs = diff_ids
+        .into_iter()
+        .filter_map(|id| app_state().committed().get(&id));
+    let mut merged_diff: Option<PortDiff> = None;
+    for diff in diffs {
+        merged_diff = if let Some(merged_diff) = merged_diff {
+            merged_diff.merge(&diff)
+        } else {
+            Some(diff.clone())
+        };
+        if merged_diff.is_none() {
+            return Err("Cannot merge diffs".to_string());
+        }
+    }
+    let Some(merged_diff) = merged_diff else {
+        return Err("Cannot merge empty diff set".to_string());
+    };
+    app_state_mut().set_current(merged_diff);
+    app_state().to_json()
+}
+
+#[wasm_bindgen]
+pub fn current_graph() -> Result<String, String> {
+    app_state().to_json()
 }
 
 #[cfg(test)]

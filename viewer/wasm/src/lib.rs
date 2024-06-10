@@ -1,5 +1,6 @@
 mod app_state;
 mod examples;
+mod hierarchy;
 mod portdiff_serial;
 mod wasm_api;
 

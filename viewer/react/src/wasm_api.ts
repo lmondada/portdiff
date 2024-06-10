@@ -2,7 +2,7 @@ import { Edge, XYPosition } from "reactflow";
 
 export const node_type_name = "portdiff" as const;
 
-import { init_app, rewrite, select_nodes } from "wasm";
+import { init_app, rewrite, select_nodes, select_diffs, hierarchy, current_graph } from "wasm";
 import place_graph from "./place_graph";
 
 export interface InternalNodeData {
@@ -64,9 +64,9 @@ export interface PlacedWasmGraph {
     edges: PlacedWasmEdge[];
 }
 
-function validate_graph(g: PlacedWasmGraph) {
+function validate_graph(g: WasmGraph) {
     for (const node of g.nodes) {
-        if (!node.id || !node.position) {
+        if (!node.id) {
             throw new Error("Invalid node");
         }
         switch (node.type) {
@@ -86,11 +86,10 @@ function validate_graph(g: PlacedWasmGraph) {
     }
 }
 
-export function initApp(): PlacedWasmGraph {
+export function initApp(): WasmGraph {
     let g: WasmGraph = JSON.parse(init_app());
-    let placed_g = place_graph(g);
-    validate_graph(placed_g);
-    return placed_g;
+    validate_graph(g);
+    return g;
 }
 
 export function rewriteGraph(edges: WasmEdge[]): WasmGraph {
@@ -107,5 +106,17 @@ export function selectNodes(nodeIds: Set<string>): WasmGraph {
     const g = JSON.parse(res);
     console.log(" =>", g);
     return g;
+}
+
+export function getHierarchy(): [string, string][] {
+    return JSON.parse(hierarchy());
+}
+
+export function selectDiffs(diffIds: Set<string>) {
+    select_diffs(JSON.stringify(Array.from(diffIds)));
+}
+
+export function currentGraph(): WasmGraph {
+    return JSON.parse(current_graph());
 }
 

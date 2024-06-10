@@ -7,6 +7,7 @@ import {
 } from "reactflow";
 import "./node_types.css";
 import { ExternalNodeData, InternalNodeData } from "../../wasm_api";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 export const nodeTypes: NodeTypes = {
     Internal: InternalNodeViewer,
@@ -51,12 +52,31 @@ function simpleHash(str: string): number {
 }
 
 function NodeViewer({
+    id,
     data,
     type,
 }: {
+    id: string;
     data: InternalNodeData | ExternalNodeData;
     type: "Internal" | "External";
 }) {
+    const [oldArity, setOldArity] = useState<{
+        n_inputs: number;
+        n_outputs: number;
+    } | null>(null);
+    const updateNodeInternals = useUpdateNodeInternals();
+
+    // useLayoutEffect(() => {
+    //     if (
+    //         oldArity !== null &&
+    //         (data.n_inputs !== oldArity.n_inputs ||
+    //             data.n_outputs !== oldArity.n_outputs)
+    //     ) {
+    //         setOldArity({ n_inputs: data.n_inputs, n_outputs: data.n_outputs });
+    //         updateNodeInternals(id);
+    //     }
+    // }, [data.n_inputs, data.n_outputs, oldArity, id, updateNodeInternals]);
+
     let input_pos = Array.from({ length: data.n_inputs }).map((_, i) => ({
         left: i * 10 - 5 * (data.n_inputs - 1),
     }));
@@ -97,3 +117,27 @@ function NodeViewer({
 }
 
 export default NodeViewer;
+
+export const hierarchyNodeTypes: NodeTypes = {
+    custom: HierarchyNodeViewer,
+};
+
+function HierarchyNodeViewer({ id }: { id: string }) {
+    let className = `node active color-palette-${
+        simpleHash(id) % 9
+    } rounded-full w-8 h-8 `;
+    return (
+        <div className={className}>
+            <Handle
+                type="target"
+                position={Position.Top}
+                className="handle handle-top"
+            />
+            <Handle
+                type="source"
+                position={Position.Bottom}
+                className="handle handle-bottom"
+            />
+        </div>
+    );
+}

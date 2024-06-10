@@ -13,21 +13,25 @@ import usePortDiffState from "../hooks/usePortDiffState";
 import CommitButton from "./port_diff_viewer/CommitButton";
 import UpdatePorts from "./port_diff_viewer/UpdatePorts";
 
-function PortDiffViewer() {
+type PortDiffViewerProps = {
+    updatePortDiff: boolean;
+    sendUpdateHierarchy: () => void;
+};
+function PortDiffViewer({
+    updatePortDiff,
+    sendUpdateHierarchy,
+}: PortDiffViewerProps) {
     const {
         isEditMode,
         toggleEditMode,
         isCommitted,
         commitSelection,
-        edit_handlers,
-        view_handlers,
+        editHandlers,
+        viewHandlers,
         nodes,
         edges,
-        nodesNoBoundary,
-        edgesNoBoundary,
-        updatedPortCounts,
-        resetUpdatedPortCounts,
-    } = usePortDiffState();
+        drainUpdatePortCounts,
+    } = usePortDiffState(updatePortDiff, sendUpdateHierarchy);
 
     // Pressing E toggles edit mode
     useEffect(() => {
@@ -49,10 +53,10 @@ function PortDiffViewer() {
     return (
         <div style={{ height: "100%" }}>
             <ReactFlow
-                nodes={isEditMode ? nodes : nodesNoBoundary}
-                edges={isEditMode ? edges : edgesNoBoundary}
+                nodes={nodes}
+                edges={edges}
                 nodeTypes={nodeTypes}
-                {...(isEditMode ? edit_handlers : view_handlers)}
+                {...(isEditMode ? editHandlers : viewHandlers)}
                 {...flow_opts}
             >
                 <Background {...bg_opts} />
@@ -66,10 +70,7 @@ function PortDiffViewer() {
                         toggleEditMode={toggleEditMode}
                     />
                 </Panel>
-                <UpdatePorts
-                    updatedPortCounts={updatedPortCounts}
-                    resetUpdatedPortCounts={resetUpdatedPortCounts}
-                />
+                <UpdatePorts drainUpdatePortCounts={drainUpdatePortCounts} />
             </ReactFlow>
         </div>
     );

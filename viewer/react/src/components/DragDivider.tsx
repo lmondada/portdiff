@@ -49,7 +49,6 @@ const DragDivider: React.FC<DragDividerProps> = ({
                 height: "100vh",
                 backgroundColor: "lightgray",
                 cursor: "ew-resize",
-                position: "absolute",
                 left: `${widthPercentage}%`,
             }}
             onMouseDown={handleMouseDown}

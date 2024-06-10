@@ -1,21 +1,15 @@
+import { XYPosition } from "reactflow";
 import { PlacedWasmEdge, PlacedWasmGraph, PlacedWasmNode, WasmEdge, WasmGraph, WasmNode } from "./wasm_api";
 import Dagre from "@dagrejs/dagre";
 
-function place_graph(g: WasmGraph): PlacedWasmGraph {
-    set_port_numbers(g);
-    const placed_nodes = place_nodes(g);
-    const placed_edges = place_edges(g.edges);
-    return {
-        nodes: placed_nodes,
-        edges: placed_edges,
-    };
-}
-
-export function place_nodes(g: WasmGraph): PlacedWasmNode[] {
+export function placeGraph<
+    N extends { id: string },
+    E extends { source: string, target: string }
+>(g: { nodes: N[], edges: E[] }): Record<string, XYPosition> {
     // Copied straight from https://reactflow.dev/learn/layouting/layouting
     const dagre = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
-    const getLayoutedElements = (nodes: WasmNode[], edges: WasmEdge[]) => {
+    const getLayoutedElements = (nodes: N[], edges: E[]) => {
         dagre.setGraph({ rankdir: "TB" });
 
         edges.forEach((edge) => dagre.setEdge(edge.source, edge.target));
@@ -39,15 +33,43 @@ export function place_nodes(g: WasmGraph): PlacedWasmNode[] {
 
     const layouted = getLayoutedElements(g.nodes, g.edges);
 
-    return layouted.nodes;
+    return layouted.nodes.reduce((acc, node) => {
+        acc[node.id] = node.position;
+        return acc;
+    }, {} as Record<string, XYPosition>);
 }
 
-export function place_edges(edges: WasmEdge[]): PlacedWasmEdge[] {
+export function placedNodes(nodes: WasmNode[], positions: Record<string, XYPosition>, selectedNodes: Set<string>): PlacedWasmNode[] {
+    console.log(selectedNodes);
+    return nodes.map((node) => ({
+        ...node,
+        position: positions[node.id],
+        selected: selectedNodes.has(node.id),
+    }));
+}
+
+export function unplaceNode(node: PlacedWasmNode): WasmNode {
+    return {
+        type: node.type,
+        id: node.id,
+        data: node.data,
+    } as WasmNode;
+}
+
+export function placedEdges(edges: WasmEdge[]): PlacedWasmEdge[] {
     return edges.map((edge) => ({
         ...edge,
         sourceHandle: `out${edge.sourceHandle}`,
         targetHandle: `in${edge.targetHandle}`,
     }));
+}
+
+export function unplaceEdge(edge: PlacedWasmEdge): WasmEdge {
+    return {
+        ...edge,
+        sourceHandle: parseInt(edge.sourceHandle.substring("out".length)),
+        targetHandle: parseInt(edge.targetHandle.substring("in".length)),
+    };
 }
 
 export function set_port_numbers(g: WasmGraph) {
@@ -70,4 +92,4 @@ export function set_port_numbers(g: WasmGraph) {
     return g;
 }
 
-export default place_graph;
+export default placeGraph;

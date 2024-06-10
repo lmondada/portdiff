@@ -1,19 +1,18 @@
-import { XYPosition } from "reactflow";
-import { useMemo } from "react";
-import { Edge } from "reactflow";
-import { PlacedWasmNode } from "./wasm_api";
+import { WasmEdge, WasmNode } from "./wasm_api";
 
 
-export function removeBoundary(
-    nodes: PlacedWasmNode[],
-    edges: Edge[],
-) {
+export function removeBoundary<
+    N extends { id: string, type: string }, P
+>(
+    nodes: N[],
+    edges: { id: string, source: string, target: string, sourceHandle: P, targetHandle: P }[],
+): [N[], { id: string, source: string, target: string, sourceHandle?: P, targetHandle?: P }[]] {
     let boundaryEnds: {
         [key: string]: {
             source: string | undefined,
-            sourceHandle: string | undefined,
+            sourceHandle: P | undefined,
             target: string | undefined,
-            targetHandle: string | undefined,
+            targetHandle: P | undefined,
         }
     } = {};
     for (const edge of edges) {
@@ -49,10 +48,10 @@ export function removeBoundary(
             return null;
         }
         return { id: `${source}-${target}`, source, sourceHandle, target, targetHandle };
-    }).filter((edge) => edge !== null) as Edge[];
+    }).filter((edge) => edge !== null) as { id: string, source: string, sourceHandle: P, target: string, targetHandle: P }[];
 
     const nodesNoBoundary = nodes.filter((node) => node.type !== "Boundary");
     const edgesNoBoundary = [...boundaryEdges, ...nonBoundaryEdges];
 
-    return { nodesNoBoundary, edgesNoBoundary };
+    return [nodesNoBoundary, edgesNoBoundary];
 }

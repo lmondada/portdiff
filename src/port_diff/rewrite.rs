@@ -1,8 +1,10 @@
-use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
+use std::{cell::RefCell, collections::BTreeMap};
 
 use itertools::Itertools;
 
 use crate::{edges::DescendantEdges, Port, PortDiff, PortEdge, UniqueVertex};
+
+use super::PortDiffData;
 
 type V = UniqueVertex;
 
@@ -18,8 +20,8 @@ impl<P: Clone + Ord> PortDiff<V, P> {
         &self,
         new_edges: &[PortEdge<V, P>],
         new_boundary_ports: Vec<Option<Port<V, P>>>,
-    ) -> Result<Rc<Self>, String> {
-        if new_boundary_ports.len() != self.boundary_ports.len() {
+    ) -> Result<Self, String> {
+        if new_boundary_ports.len() != self.data.boundary_ports.len() {
             return Err("Mismatching number of boundary ports".to_string());
         }
         if self.has_any_descendants() {
@@ -28,7 +30,7 @@ impl<P: Clone + Ord> PortDiff<V, P> {
 
         // Get port sets to compare
         let new_ports = get_port_lists(new_edges);
-        let curr_ports = get_port_lists(self.edges.iter());
+        let curr_ports = get_port_lists(&self.data.edges);
 
         // Create the new vertices where required
         let mut new_vertices = BTreeMap::<V, V>::new();
@@ -61,6 +63,7 @@ impl<P: Clone + Ord> PortDiff<V, P> {
 
         // Create new boundary ports
         let boundary_ports = self
+            .data
             .boundary_ports
             .iter()
             .zip(&new_boundary_ports)
@@ -68,10 +71,16 @@ impl<P: Clone + Ord> PortDiff<V, P> {
             .map(new_port)
             .collect();
 
-        Ok(Rc::new(Self {
+        // Add the removed vertices to `used_vertices` of ancestor edges
+        let mut boundary_anc = self.data.boundary_anc.clone();
+        for anc in &mut boundary_anc {
+            anc.add_used_vertices(new_vertices.keys().cloned());
+        }
+
+        Ok(Self::new(PortDiffData {
             edges: new_edges,
             boundary_ports,
-            boundary_anc: self.boundary_anc.clone(),
+            boundary_anc,
             boundary_desc,
         }))
     }
@@ -95,4 +104,34 @@ fn get_port_lists<'e, P: Ord + Clone + 'e>(
         adj_list.sort_unstable();
     }
     adjacency
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+
+    use crate::{
+        edges::InternalEdge,
+        port_diff::tests::{root_diff, test_nodes, TestPortDiff},
+    };
+
+    use super::*;
+
+    #[rstest]
+    fn test_rewrite(root_diff: TestPortDiff) {
+        let nodes = test_nodes();
+        let child = PortDiff::with_nodes([nodes[0], nodes[1]], &root_diff);
+        let grandchild = child
+            .rewrite(&[], vec![None; child.n_boundary_edges()])
+            .unwrap();
+        assert_eq!(grandchild.n_internal_edges(), 0);
+        assert_eq!(grandchild.n_boundary_edges(), 1);
+        dbg!(&root_diff);
+        assert_eq!(
+            root_diff
+                .get_descendant_edges(&InternalEdge(3), crate::EdgeEndType::Left)
+                .len(),
+            2
+        );
+    }
 }

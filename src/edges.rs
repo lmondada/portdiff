@@ -2,10 +2,9 @@ use std::{
     cell::Ref,
     collections::BTreeSet,
     fmt::{self, Debug},
-    rc::{Rc, Weak},
 };
 
-use crate::{EdgeEndType, Port};
+use crate::{port_diff::WeakPortDiff, EdgeEndType, Port};
 
 use crate::PortDiff;
 
@@ -47,10 +46,10 @@ impl InternalEdge {
 
 #[derive(Clone)]
 pub(super) struct AncestorEdge<V, P> {
-    owner: Rc<PortDiff<V, P>>,
+    owner: PortDiff<V, P>,
     edge: InternalEdge,
     boundary_end: EdgeEndType,
-    exclude_vertices: BTreeSet<V>,
+    used_vertices: BTreeSet<V>,
 }
 
 impl<V, P> Debug for AncestorEdge<V, P> {
@@ -61,9 +60,9 @@ impl<V, P> Debug for AncestorEdge<V, P> {
 
 #[derive(Clone)]
 pub(super) struct DescendantEdge<V, P> {
-    owner: Weak<PortDiff<V, P>>,
+    owner: WeakPortDiff<V, P>,
     edge: BoundaryEdge,
-    exclude_vertices: BTreeSet<V>,
+    used_vertices: BTreeSet<V>,
 }
 
 impl<V, P> Debug for DescendantEdge<V, P> {
@@ -73,7 +72,7 @@ impl<V, P> Debug for DescendantEdge<V, P> {
 }
 
 impl<V, P> AncestorEdge<V, P> {
-    pub(super) fn new_internal_edge(edge: EdgeEnd, parent: &Rc<PortDiff<V, P>>) -> Self {
+    pub(super) fn new_internal_edge(edge: EdgeEnd, parent: &PortDiff<V, P>) -> Self {
         let EdgeEnd::I(edge, boundary_end) = edge else {
             panic!("Expected internal edge");
         };
@@ -81,11 +80,11 @@ impl<V, P> AncestorEdge<V, P> {
             owner: parent.clone(),
             edge,
             boundary_end,
-            exclude_vertices: BTreeSet::new(),
+            used_vertices: BTreeSet::new(),
         }
     }
 
-    pub(super) fn owner(&self) -> &Rc<PortDiff<V, P>> {
+    pub(super) fn owner(&self) -> &PortDiff<V, P> {
         &self.owner
     }
 
@@ -93,8 +92,15 @@ impl<V, P> AncestorEdge<V, P> {
         EdgeEnd::I(self.edge, self.boundary_end)
     }
 
-    pub(super) fn exclude_vertices(&self) -> &BTreeSet<V> {
-        &self.exclude_vertices
+    pub(super) fn used_vertices(&self) -> &BTreeSet<V> {
+        &self.used_vertices
+    }
+
+    pub(super) fn add_used_vertices(&mut self, vertices: impl IntoIterator<Item = V>)
+    where
+        V: Ord + Eq,
+    {
+        self.used_vertices.extend(vertices)
     }
 
     pub(super) fn opposite(&self) -> Self
@@ -105,7 +111,7 @@ impl<V, P> AncestorEdge<V, P> {
             owner: self.owner().clone(),
             edge: self.edge,
             boundary_end: self.boundary_end.opposite(),
-            exclude_vertices: self.exclude_vertices.clone(),
+            used_vertices: self.used_vertices.clone(),
         }
     }
 
@@ -118,8 +124,8 @@ impl<V, P> AncestorEdge<V, P> {
     where
         V: Ord,
     {
-        self.exclude_vertices()
-            .intersection(&other.exclude_vertices())
+        self.used_vertices()
+            .intersection(&other.used_vertices())
             .next()
             .is_none()
     }
@@ -127,14 +133,14 @@ impl<V, P> AncestorEdge<V, P> {
 
 impl<V, P> DescendantEdge<V, P> {
     pub(super) fn new(
-        owner: &Rc<PortDiff<V, P>>,
+        owner: &PortDiff<V, P>,
         edge: BoundaryEdge,
-        exclude_vertices: BTreeSet<V>,
+        used_vertices: BTreeSet<V>,
     ) -> Self {
         Self {
-            owner: Rc::downgrade(owner),
+            owner: owner.downgrade(),
             edge,
-            exclude_vertices,
+            used_vertices,
         }
     }
 
@@ -142,11 +148,11 @@ impl<V, P> DescendantEdge<V, P> {
         EdgeEnd::B(self.edge)
     }
 
-    pub(super) fn exclude_vertices(&self) -> &BTreeSet<V> {
-        &self.exclude_vertices
+    pub(super) fn used_vertices(&self) -> &BTreeSet<V> {
+        &self.used_vertices
     }
 
-    pub(super) fn owner(&self) -> Option<Rc<PortDiff<V, P>>> {
+    pub(super) fn owner(&self) -> Option<PortDiff<V, P>> {
         self.owner.upgrade()
     }
 }
@@ -174,5 +180,10 @@ impl<V, P> DescendantEdges<V, P> {
 
     pub(super) fn is_empty(&self) -> bool {
         self.left.is_empty() && self.right.is_empty()
+    }
+
+    pub(super) fn append(&mut self, other: DescendantEdges<V, P>) {
+        self.left.extend(other.left);
+        self.right.extend(other.right);
     }
 }

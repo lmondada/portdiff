@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import PortDiffViewer from "./components/PortDiffViewer";
 
@@ -6,14 +6,27 @@ import "./App.css";
 import "tailwindcss/tailwind.css";
 import "reactflow/dist/style.css";
 import DragDivider from "./components/DragDivider";
+import HierarchyViewer from "./components/HierarchyViewer";
+
+function useCommunicationChannel(): [boolean, () => void] {
+    const [flag, setFlag] = useState(false);
+    const sendFlag = useCallback(() => setFlag((f) => !f), [setFlag]);
+    return [flag, sendFlag];
+}
 
 const App = () => {
-    const [widthPercentage, setWidthPercentage] = React.useState(70);
+    const [widthPercentage, setWidthPercentage] = useState(70);
+    // Communicate state update between PortDiffViewer and HierarchyViewer
+    const [updatePortDiff, sendUpdatePortDiff] = useCommunicationChannel();
+    const [updateHierarchy, sendUpdateHierarchy] = useCommunicationChannel();
 
     return (
         <div style={{ display: "flex", width: "100vw", height: "100vh" }}>
             <div style={{ width: `${widthPercentage - 2}%`, height: "100%" }}>
-                <PortDiffViewer />
+                <PortDiffViewer
+                    updatePortDiff={updatePortDiff}
+                    sendUpdateHierarchy={sendUpdateHierarchy}
+                />
             </div>
             <DragDivider
                 widthPercentage={widthPercentage}
@@ -25,7 +38,10 @@ const App = () => {
                     height: "100%",
                 }}
             >
-                {/* Another component can be placed here */}
+                <HierarchyViewer
+                    updateHierarchy={updateHierarchy}
+                    sendUpdatePortDiff={sendUpdatePortDiff}
+                />
             </div>
         </div>
     );

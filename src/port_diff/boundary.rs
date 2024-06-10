@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, rc::Rc};
+use std::collections::BTreeSet;
 
 use itertools::{izip, Itertools};
 
@@ -42,15 +42,28 @@ fn filter_internal<'p, V: Eq + Ord + 'p, P: 'p>(
 /// TODO: Sorted for consistency across diffs.
 pub(super) fn compute_boundary<V: Eq + Ord + Clone, P: Clone>(
     nodes: &BTreeSet<V>,
-    parent: &Rc<PortDiff<V, P>>,
+    parents: &[&PortDiff<V, P>],
 ) -> Boundary<V, P> {
     // Find the subset of boundary ports of parent
-    let boundary_ends = filter_boundary(&nodes, &parent.boundary_ports);
-    let internal_ends = filter_internal(&nodes, &parent.edges);
+    let boundary_ends = parents.iter().flat_map(|parent| {
+        filter_boundary(&nodes, &parent.data.boundary_ports).map(move |e| (e, parent))
+    });
+    // Remove boundary ends that lead to another `parent`
+    let boundary_ends = boundary_ends.filter(|(e, parent)| {
+        let &EdgeEnd::B(b_edge) = e else {
+            unreachable!()
+        };
+        !parent
+            .find_opposite_end(b_edge)
+            .any(|(p, _)| parents.contains(&&p))
+    });
+    let internal_ends = parents
+        .iter()
+        .flat_map(|parent| filter_internal(&nodes, &parent.data.edges).map(move |e| (e, parent)));
     let all_ends = boundary_ends.chain(internal_ends).collect_vec();
 
     let mut boundary = Boundary::with_capacity(all_ends.len());
-    for edge_end in all_ends {
+    for (edge_end, parent) in all_ends {
         let (port, ancestor) = match edge_end {
             EdgeEnd::B(b_edge) => {
                 let p = parent.boundary_edge(&b_edge).clone();

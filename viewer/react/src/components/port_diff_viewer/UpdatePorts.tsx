@@ -1,19 +1,19 @@
+import { useEffect } from "react";
 import { useUpdateNodeInternals } from "reactflow";
 
 type UpdatePortsProps = {
-    updatedPortCounts: string[];
-    resetUpdatedPortCounts: () => void;
+    drainUpdatePortCounts: () => string[];
 };
 
-function UpdatePorts({
-    updatedPortCounts,
-    resetUpdatedPortCounts,
-}: UpdatePortsProps) {
+function UpdatePorts({ drainUpdatePortCounts }: UpdatePortsProps) {
     const updateNodeInternals = useUpdateNodeInternals();
-    if (updatedPortCounts.length > 0) {
-        updateNodeInternals(updatedPortCounts);
-        resetUpdatedPortCounts();
-    }
+    useEffect(() => {
+        const updatedPortCounts = drainUpdatePortCounts();
+        console.log("updatedPortCounts", updatedPortCounts);
+        if (updatedPortCounts.length > 0) {
+            updateNodeInternals(updatedPortCounts);
+        }
+    }, [drainUpdatePortCounts, updateNodeInternals]);
     return <></>;
 }
 
