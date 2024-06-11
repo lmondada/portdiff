@@ -33,12 +33,24 @@ function BoundaryNodeViewer() {
     );
 }
 
-function InternalNodeViewer({ data }: { data: InternalNodeData }) {
-    return <NodeViewer data={data} type="Internal" />;
+function InternalNodeViewer({
+    data,
+    id,
+}: {
+    data: InternalNodeData;
+    id: string;
+}) {
+    return <NodeViewer data={data} type="Internal" id={id} />;
 }
 
-function ExternalNodeViewer({ data }: { data: ExternalNodeData }) {
-    return <NodeViewer data={data} type="External" />;
+function ExternalNodeViewer({
+    data,
+    id,
+}: {
+    data: ExternalNodeData;
+    id: string;
+}) {
+    return <NodeViewer data={data} type="External" id={id} />;
 }
 
 function simpleHash(str: string): number {

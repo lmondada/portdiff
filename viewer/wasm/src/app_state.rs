@@ -102,31 +102,25 @@ impl AppState {
             .unique()
             .collect::<Result<Vec<_>, _>>()?;
         // Add a boundary for every edge between an internal and external node
-        let (boundary_edges, other_edges): (Vec<_>, Vec<_>) = edges.into_iter().partition(|edge| {
-            let Some(left) = nodes.iter().find(|n| n.id() == edge.left.node.id()) else {
-                return false;
-            };
-            let Some(right) = nodes.iter().find(|n| n.id() == edge.right.node.id()) else {
-                return false;
-            };
-            (left.is_external() && right.is_internal())
-                || (left.is_internal() && right.is_external())
-        });
+        let boundary_edges_ind = get_boundary_edges(&edges, port_diff)?;
         let boundary_nodes = self
             .current_boundary
             .iter()
             .map(|&id| Node::new_boundary(id))
             .collect_vec();
-        if boundary_edges.len() != boundary_nodes.len() {
-            return Err("Mismatch between boundary edges and boundary nodes".to_string());
-        }
-        let split_boundary_edges = boundary_edges
-            .into_iter()
+        let other_edges = edges
+            .iter()
             .enumerate()
-            .flat_map(|(i, edge)| {
+            .filter(|(i, _)| !boundary_edges_ind.contains(i))
+            .map(|(_, e)| e.clone())
+            .collect_vec();
+        let split_boundary_edges = boundary_edges_ind
+            .into_iter()
+            .zip(&boundary_nodes)
+            .flat_map(|(index, boundary)| {
                 [
-                    Edge::from_boundary(&edge.left, &boundary_nodes[i]),
-                    Edge::from_boundary(&edge.right, &boundary_nodes[i]),
+                    Edge::from_boundary(&edges[index].left, boundary),
+                    Edge::from_boundary(&edges[index].right, boundary),
                 ]
             })
             .collect_vec();
@@ -164,4 +158,28 @@ impl AppState {
         }
         (port_edges, boundary)
     }
+}
+
+/// TODO: handle several identical ports
+fn get_boundary_edges(
+    edges: &[PortEdge],
+    port_diff: &portdiff::PortDiff<UniqueVertex, PortLabel>,
+) -> Result<Vec<usize>, String> {
+    let internal_edges: BTreeSet<_> = port_diff
+        .internal_edges()
+        .map(|e| port_diff.internal_edge(&e))
+        .collect();
+    let mut ret = Vec::with_capacity(port_diff.n_boundary_edges());
+    for b_edge in port_diff.boundary_edges() {
+        let port = port_diff.boundary_edge(&b_edge);
+        let (index, _) = edges
+            .iter()
+            .enumerate()
+            .filter(|(_, e)| &e.left == port || &e.right == port)
+            .filter(|(_, e)| !internal_edges.contains(e))
+            .exactly_one()
+            .map_err(|_| "ambiguous boundary".to_string())?;
+        ret.push(index);
+    }
+    Ok(ret)
 }

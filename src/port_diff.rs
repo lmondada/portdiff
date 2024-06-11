@@ -2,6 +2,8 @@ mod boundary;
 mod merge;
 mod rewrite;
 
+pub use merge::MergeType;
+
 use std::{
     cell::{Ref, RefCell},
     collections::BTreeSet,
@@ -15,7 +17,7 @@ use itertools::Itertools;
 
 use crate::{EdgeEndType, Port, PortEdge};
 
-use self::boundary::{compute_boundary, Boundary};
+use self::boundary::compute_boundary;
 
 #[derive(Debug)]
 pub struct PortDiff<V, P> {
@@ -24,8 +26,11 @@ pub struct PortDiff<V, P> {
 
 type PortDiffPtr<V, P> = *const PortDiffData<V, P>;
 
-impl<V: Clone, P> PortDiff<V, P> {
-    fn new(data: PortDiffData<V, P>) -> Self {
+impl<V, P> PortDiff<V, P> {
+    fn new(data: PortDiffData<V, P>) -> Self
+    where
+        V: Clone,
+    {
         let ret = Self {
             data: Rc::new(data),
         };
@@ -34,12 +39,15 @@ impl<V: Clone, P> PortDiff<V, P> {
         ret
     }
 
-    fn as_ptr(&self) -> PortDiffPtr<V, P> {
+    pub(crate) fn as_ptr(&self) -> PortDiffPtr<V, P> {
         Rc::as_ptr(&self.data)
     }
 
     /// Add a weak ref to `desc` at all its ancestors
-    fn record_descendant(&self) {
+    fn record_descendant(&self)
+    where
+        V: Clone,
+    {
         for boundary in self.boundary_edges() {
             let ancestor_edge = self.get_ancestor_edge(&boundary);
             let descendant_edge =
@@ -85,7 +93,7 @@ impl<V, P> WeakPortDiff<V, P> {
 }
 
 #[derive(Clone, Debug)]
-struct PortDiffData<V, P> {
+pub(crate) struct PortDiffData<V, P> {
     /// The internal edges
     edges: Vec<PortEdge<V, P>>,
     /// The boundary ports of the boundary edges
@@ -127,35 +135,21 @@ impl<V: Eq + Clone + Ord, P: Clone> PortDiff<V, P> {
             .cloned()
             .collect_vec();
 
-        let Boundary {
-            ports: boundary_ports,
-            ancestors: boundary_anc,
-        } = compute_boundary(&nodes, &[parent]);
+        let boundary = compute_boundary(&nodes, &[parent]);
         let boundary_desc = RefCell::new(vec![DescendantEdges::default(); edges.len()]);
 
         Self::new(PortDiffData {
             edges,
-            boundary_ports,
-            boundary_anc,
+            boundary_ports: boundary.ports().cloned().collect_vec(),
+            boundary_anc: boundary.into_ancestors(),
             boundary_desc,
         })
     }
 
-    pub fn expand(&self, boundary: BoundaryEdge) -> impl Iterator<Item = Self> + '_
-    where
-        P: Eq,
-    {
-        self.find_opposite_end(boundary)
-            .map(move |(opp_owner, opp_edge_end)| {
-                let opp = Self::with_root(opp_edge_end.node(&opp_owner).clone(), &opp_owner);
-                self.merge(&opp).unwrap()
-            })
-    }
-
     pub fn extract(&self) -> Vec<PortEdge<V, P>>
     where
-        V: Clone,
-        P: Clone + Eq,
+        V: Clone + std::fmt::Debug,
+        P: Clone + Eq + std::fmt::Debug,
     {
         if self.data.boundary_ports.is_empty() {
             return self.data.edges.clone();
@@ -214,6 +208,16 @@ impl<V, P> PortDiff<V, P> {
         &self.data.edges[index]
     }
 
+    pub(super) fn port(&self, edge_end: EdgeEnd) -> &Port<V, P> {
+        match edge_end {
+            EdgeEnd::B(b_edge) => self.boundary_edge(&b_edge),
+            EdgeEnd::I(i_edge, end_type) => match end_type {
+                EdgeEndType::Left => &self.internal_edge(&i_edge).left,
+                EdgeEndType::Right => &self.internal_edge(&i_edge).right,
+            },
+        }
+    }
+
     pub fn degree(&self, node: &V) -> usize
     where
         V: Eq,
@@ -223,6 +227,18 @@ impl<V, P> PortDiff<V, P> {
             .iter()
             .filter(|e| &e.left.node == node || &e.right.node == node)
             .count()
+    }
+
+    pub fn find_edge(&self, edge: &PortEdge<V, P>) -> Option<InternalEdge>
+    where
+        V: Eq,
+        P: Eq,
+    {
+        self.data
+            .edges
+            .iter()
+            .position(|e| e == edge)
+            .map(InternalEdge)
     }
 
     pub fn vertices(&self) -> impl Iterator<Item = &V>
@@ -303,8 +319,6 @@ impl<V, P> PortDiff<V, P> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
-
     use rstest::{fixture, rstest};
     use uuid::Uuid;
 
@@ -362,52 +376,51 @@ mod tests {
         PortDiff::with_no_boundary(edges)
     }
 
-    #[rstest]
-    fn test_port_diff(root_diff: TestPortDiff) {
-        let nodes = test_nodes();
-        let just_1 = PortDiff::with_root(nodes[1], &root_diff);
-        assert_eq!(just_1.n_boundary_edges(), 4);
-        assert_eq!(just_1.n_internal_edges(), 0);
-        let child_1_2 = {
-            let edge = just_1.find_boundary_edge(&nodes[1], &3).unwrap();
-            let expansion_opts = just_1.expand(edge).collect_vec();
-            assert_eq!(expansion_opts.len(), 1);
-            expansion_opts.into_iter().next().unwrap()
-        };
-        dbg!(&child_1_2);
-        assert_eq!(child_1_2.n_boundary_edges(), 3 + 3);
-        assert_eq!(child_1_2.n_internal_edges(), 1);
+    // #[rstest]
+    // fn test_port_diff(root_diff: TestPortDiff) {
+    //     let nodes = test_nodes();
+    //     let just_1 = PortDiff::with_root(nodes[1], &root_diff);
+    //     assert_eq!(just_1.n_boundary_edges(), 4);
+    //     assert_eq!(just_1.n_internal_edges(), 0);
+    //     let child_1_2 = {
+    //         let edge = just_1.find_boundary_edge(&nodes[1], &3).unwrap();
+    //         let expansion_opts = just_1.expand(edge).collect_vec();
+    //         assert_eq!(expansion_opts.len(), 1);
+    //         expansion_opts.into_iter().next().unwrap()
+    //     };
+    //     assert_eq!(child_1_2.n_boundary_edges(), 3 + 3);
+    //     assert_eq!(child_1_2.n_internal_edges(), 1);
 
-        // Check boundary
-        let boundary = BTreeSet::from_iter(child_1_2.data.boundary_ports.clone());
-        let exp_boundary = BTreeSet::from_iter(
-            (0..3)
-                .map(|i| Port {
-                    node: nodes[1],
-                    port: i,
-                })
-                .chain((0..3).map(|i| Port {
-                    node: nodes[2],
-                    port: i,
-                })),
-        );
-        assert_eq!(boundary, exp_boundary);
+    //     // Check boundary
+    //     let boundary = BTreeSet::from_iter(child_1_2.data.boundary_ports.clone());
+    //     let exp_boundary = BTreeSet::from_iter(
+    //         (0..3)
+    //             .map(|i| Port {
+    //                 node: nodes[1],
+    //                 port: i,
+    //             })
+    //             .chain((0..3).map(|i| Port {
+    //                 node: nodes[2],
+    //                 port: i,
+    //             })),
+    //     );
+    //     assert_eq!(boundary, exp_boundary);
 
-        // Check internal edges
-        assert_eq!(
-            child_1_2.data.edges,
-            [PortEdge {
-                left: Port {
-                    node: nodes[1],
-                    port: 3
-                },
-                right: Port {
-                    node: nodes[2],
-                    port: 3
-                },
-            }]
-        );
-    }
+    //     // Check internal edges
+    //     assert_eq!(
+    //         child_1_2.data.edges,
+    //         [PortEdge {
+    //             left: Port {
+    //                 node: nodes[1],
+    //                 port: 3
+    //             },
+    //             right: Port {
+    //                 node: nodes[2],
+    //                 port: 3
+    //             },
+    //         }]
+    //     );
+    // }
 
     #[rstest]
     fn test_with_nodes(root_diff: TestPortDiff) {

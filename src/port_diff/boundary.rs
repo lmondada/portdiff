@@ -4,7 +4,7 @@ use itertools::{izip, Itertools};
 
 use crate::{
     edges::{AncestorEdge, BoundaryEdge, EdgeEnd, InternalEdge},
-    EdgeEndType, Port, PortDiff, PortEdge,
+    Port, PortDiff, PortEdge,
 };
 
 fn gen_boundary_ends() -> impl Iterator<Item = EdgeEnd> {
@@ -40,10 +40,10 @@ fn filter_internal<'p, V: Eq + Ord + 'p, P: 'p>(
 /// The list of edges (either internal or boundary) adjacent to root in parent.
 ///
 /// TODO: Sorted for consistency across diffs.
-pub(super) fn compute_boundary<V: Eq + Ord + Clone, P: Clone>(
+pub(super) fn compute_boundary<'a, V: Eq + Ord + Clone, P: Clone>(
     nodes: &BTreeSet<V>,
-    parents: &[&PortDiff<V, P>],
-) -> Boundary<V, P> {
+    parents: &[&'a PortDiff<V, P>],
+) -> Boundary<'a, V, P> {
     // Find the subset of boundary ports of parent
     let boundary_ends = parents.iter().flat_map(|parent| {
         filter_boundary(&nodes, &parent.data.boundary_ports).map(move |e| (e, parent))
@@ -64,43 +64,44 @@ pub(super) fn compute_boundary<V: Eq + Ord + Clone, P: Clone>(
 
     let mut boundary = Boundary::with_capacity(all_ends.len());
     for (edge_end, parent) in all_ends {
-        let (port, ancestor) = match edge_end {
-            EdgeEnd::B(b_edge) => {
-                let p = parent.boundary_edge(&b_edge).clone();
-                let a = parent.get_ancestor_edge(&b_edge).clone();
-                (p, a)
-            }
-            EdgeEnd::I(i_edge, EdgeEndType::Left) => {
-                let p = parent.internal_edge(&i_edge).left.clone();
-                let a = AncestorEdge::new_internal_edge(edge_end, parent);
-                (p, a)
-            }
-            EdgeEnd::I(i_edge, EdgeEndType::Right) => {
-                let p = parent.internal_edge(&i_edge).right.clone();
-                let a = AncestorEdge::new_internal_edge(edge_end, parent);
-                (p, a)
-            }
+        let ancestor = match edge_end {
+            EdgeEnd::B(b_edge) => parent.get_ancestor_edge(&b_edge).clone(),
+            EdgeEnd::I(_, _) => AncestorEdge::new_internal_edge(edge_end, parent),
         };
-        boundary.add(port, ancestor);
+        boundary.add(edge_end, parent, ancestor);
     }
     boundary
 }
 
-pub(super) struct Boundary<V, P> {
-    pub(super) ports: Vec<Port<V, P>>,
-    pub(super) ancestors: Vec<AncestorEdge<V, P>>,
+pub(super) struct Boundary<'a, V, P> {
+    edge_ends: Vec<EdgeEnd>,
+    owners: Vec<&'a PortDiff<V, P>>,
+    ancestors: Vec<AncestorEdge<V, P>>,
 }
 
-impl<V, P> Boundary<V, P> {
+impl<'a, V, P> Boundary<'a, V, P> {
     fn with_capacity(size: usize) -> Self {
         Self {
-            ports: Vec::with_capacity(size),
+            edge_ends: Vec::with_capacity(size),
+            owners: Vec::with_capacity(size),
             ancestors: Vec::with_capacity(size),
         }
     }
 
-    fn add(&mut self, port: Port<V, P>, ancestor: AncestorEdge<V, P>) {
-        self.ports.push(port);
+    pub(super) fn ports(&self) -> impl Iterator<Item = &Port<V, P>> + '_ {
+        self.owners
+            .iter()
+            .zip(&self.edge_ends)
+            .map(|(owner, edge_end)| owner.port(*edge_end))
+    }
+
+    pub(super) fn into_ancestors(self) -> Vec<AncestorEdge<V, P>> {
+        self.ancestors
+    }
+
+    fn add(&mut self, edge_end: EdgeEnd, owner: &'a PortDiff<V, P>, ancestor: AncestorEdge<V, P>) {
+        self.edge_ends.push(edge_end);
+        self.owners.push(owner);
         self.ancestors.push(ancestor);
     }
 }

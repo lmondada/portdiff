@@ -1,4 +1,5 @@
-use portdiff::UniqueVertex;
+use itertools::Itertools;
+use portdiff::{port_diff::MergeType, UniqueVertex};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
@@ -70,22 +71,33 @@ pub fn select_diffs(diff_ids: String) -> Result<String, String> {
     let diffs = diff_ids
         .into_iter()
         .filter_map(|id| app_state().committed().get(&id));
-    let mut merged_diff: Option<PortDiff> = None;
-    for diff in diffs {
-        merged_diff = if let Some(merged_diff) = merged_diff {
-            merged_diff.merge(&diff)
-        } else {
-            Some(diff.clone())
-        };
-        if merged_diff.is_none() {
-            return Err("Cannot merge diffs".to_string());
-        }
-    }
-    let Some(merged_diff) = merged_diff else {
-        return Err("Cannot merge empty diff set".to_string());
-    };
+    let merged_diff = PortDiff::merge_all(diffs)?;
     app_state_mut().set_current(merged_diff);
     app_state().to_json()
+}
+
+/// The list of diffs that are compatible with the current selection
+#[wasm_bindgen]
+pub fn list_compatible(selected: String) -> Result<String, String> {
+    let Ok(selected_ids): Result<Vec<Uuid>, _> = serde_json::from_str(&selected) else {
+        return Err("Error parsing diff ids".to_string());
+    };
+    let selected = selected_ids
+        .iter()
+        .filter_map(|id| app_state().committed().get(id));
+    let merged = PortDiff::merge_all(selected)?;
+    let other = app_state()
+        .committed()
+        .keys()
+        .filter(|diff_id| !selected_ids.contains(diff_id));
+
+    let compatible = other
+        .filter(|diff_id| {
+            let diff = app_state().committed().get(diff_id).unwrap();
+            diff.merge_type(&merged) != MergeType::NoMerge
+        })
+        .collect_vec();
+    serde_json::to_string(&compatible).map_err(|_| "Error serializing compatible diffs".to_string())
 }
 
 #[wasm_bindgen]

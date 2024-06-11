@@ -20,7 +20,7 @@ pub struct Port<V, P> {
 ///
 /// Note that `source` and `target` do not imply the edge orientation, but its
 /// traversal direction (edge orientation should be captured in port labels `P`).
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PortEdge<V, P> {
     /// The source port
     pub left: Port<V, P>,
@@ -28,7 +28,7 @@ pub struct PortEdge<V, P> {
     pub right: Port<V, P>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum EdgeEndType {
     Left,
     Right,

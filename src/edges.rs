@@ -4,34 +4,20 @@ use std::{
     fmt::{self, Debug},
 };
 
-use crate::{port_diff::WeakPortDiff, EdgeEndType, Port};
+use crate::{port_diff::WeakPortDiff, EdgeEndType};
 
 use crate::PortDiff;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum EdgeEnd {
     B(BoundaryEdge),
     I(InternalEdge, EdgeEndType),
 }
 
-impl EdgeEnd {
-    pub(super) fn node_port<'d, V, P>(&'d self, diff: &'d PortDiff<V, P>) -> &'d Port<V, P> {
-        match &self {
-            EdgeEnd::B(b_edge) => &diff.boundary_edge(b_edge),
-            EdgeEnd::I(i_edge, EdgeEndType::Left) => &diff.internal_edge(i_edge).left,
-            EdgeEnd::I(i_edge, EdgeEndType::Right) => &diff.internal_edge(i_edge).right,
-        }
-    }
-
-    pub(super) fn node<'d, V, P>(&'d self, diff: &'d PortDiff<V, P>) -> &'d V {
-        &self.node_port(diff).node
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BoundaryEdge(pub(super) usize);
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InternalEdge(pub(super) usize);
 
 impl InternalEdge {
@@ -67,7 +53,12 @@ pub(super) struct DescendantEdge<V, P> {
 
 impl<V, P> Debug for DescendantEdge<V, P> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "DescendantEdge{{{}}}", self.edge.0)
+        write!(
+            f,
+            "DescendantEdge{{{}}} @ {:?}",
+            self.edge.0,
+            self.owner.upgrade().map(|x| x.as_ptr())
+        )
     }
 }
 
@@ -90,6 +81,14 @@ impl<V, P> AncestorEdge<V, P> {
 
     pub(super) fn edge_end(&self) -> EdgeEnd {
         EdgeEnd::I(self.edge, self.boundary_end)
+    }
+
+    pub(super) fn internal_edge(&self) -> InternalEdge {
+        self.edge
+    }
+
+    pub(super) fn edge_end_type(&self) -> EdgeEndType {
+        self.boundary_end
     }
 
     pub(super) fn used_vertices(&self) -> &BTreeSet<V> {
@@ -148,6 +147,10 @@ impl<V, P> DescendantEdge<V, P> {
         EdgeEnd::B(self.edge)
     }
 
+    pub(super) fn boundary_edge(&self) -> BoundaryEdge {
+        self.edge
+    }
+
     pub(super) fn used_vertices(&self) -> &BTreeSet<V> {
         &self.used_vertices
     }
@@ -180,10 +183,5 @@ impl<V, P> DescendantEdges<V, P> {
 
     pub(super) fn is_empty(&self) -> bool {
         self.left.is_empty() && self.right.is_empty()
-    }
-
-    pub(super) fn append(&mut self, other: DescendantEdges<V, P>) {
-        self.left.extend(other.left);
-        self.right.extend(other.right);
     }
 }

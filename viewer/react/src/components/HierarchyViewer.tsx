@@ -5,7 +5,13 @@ import {
     useEffect,
     useState,
 } from "react";
-import ReactFlow, { Node, Edge, NodeChange, applyNodeChanges } from "reactflow";
+import ReactFlow, {
+    Node,
+    Edge,
+    NodeChange,
+    applyNodeChanges,
+    Panel,
+} from "reactflow";
 import { getHierarchy, selectDiffs } from "../wasm_api";
 import { placeGraph } from "../place_graph";
 import { hierarchyNodeTypes } from "./port_diff_viewer/node_types";
@@ -21,6 +27,7 @@ function HierarchyViewer({
 }: HierarchyViewerProps) {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
+    const [showToaster, setShowToaster] = useState(false);
     const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
 
     useEffect(() => {
@@ -48,8 +55,14 @@ function HierarchyViewer({
         const newNodes = nodes.filter((node) => node.selected);
         setSelectedNodes(new Set(newNodes.map((node) => node.id)));
         if (newNodes.length > 0) {
-            selectDiffs(new Set(newNodes.map((node) => node.id)));
-            sendUpdatePortDiff();
+            try {
+                selectDiffs(new Set(newNodes.map((node) => node.id)));
+                sendUpdatePortDiff();
+            } catch (e) {
+                console.log(e);
+                setShowToaster(true);
+                setTimeout(() => setShowToaster(false), 5000);
+            }
         }
     }, [nodes]);
 
@@ -62,7 +75,15 @@ function HierarchyViewer({
                 edges={edges}
                 nodeTypes={hierarchyNodeTypes}
                 {...view_handlers}
-            ></ReactFlow>
+            >
+                {showToaster && (
+                    <Panel position="bottom-right">
+                        <div className="bg-red-500 text-white p-2 rounded">
+                            Cannot merge diffs
+                        </div>
+                    </Panel>
+                )}
+            </ReactFlow>
         </div>
     );
 }

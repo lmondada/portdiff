@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
-import { initApp, rewriteGraph, selectNodes, currentGraph } from "../wasm_api";
+import { initApp, rewriteGraph, selectNodes, currentGraph, WasmEdge } from "../wasm_api";
 import { NodeChange, NodeSelectionChange } from "reactflow";
 import useRFGraph from "../RFGraph";
 import placeGraph from "../place_graph";
@@ -49,17 +49,22 @@ function usePortDiffState(updatePortDiff: boolean, sendUpdateHierarchy: () => vo
         graphActions.setGraph(g);
     }, [updatePortDiff, graphActions.setGraph]);
 
+    const [prevInternalEdges, setPrevInternalEdges] = useState<WasmEdge[]>([]);
+
     const toggleEditMode = useCallback(() => setIsEditMode((mode) => {
-        if (mode) {
+        const internalEdges = graph.getInternalEdges();
+        if (mode && (internalEdges.length !== prevInternalEdges.length || internalEdges.some((edge, index) => edge.id != prevInternalEdges[index].id))) {
             // We are leaving edit mode, need to commit changes
-            const internalEdges = graph.getInternalEdges();
             const g = rewriteGraph(internalEdges);
             graphActions.setGraph(g);
             setIsCommitted(true);
             sendUpdateHierarchy();
+        } else if (!mode) {
+            // Record the internal edges when entering edit mode for comparison
+            setPrevInternalEdges(internalEdges);
         }
         return !mode;
-    }), [graph, sendUpdateHierarchy]);
+    }), [graph, sendUpdateHierarchy, prevInternalEdges, setPrevInternalEdges]);
 
     const commitSelection = useCallback(() => {
         const g = selectNodes(graph.getSelectedNodes());

@@ -44,8 +44,8 @@ class RFGraph {
             id: edge.id,
             source: edge.source,
             target: edge.target,
-            sourceHandle: parseInt(edge.sourceHandle.substring("out".length)),
-            targetHandle: parseInt(edge.targetHandle.substring("in".length)),
+            sourceHandle: parseInt(edge.sourceHandle?.substring("out".length) ?? "0"),
+            targetHandle: parseInt(edge.targetHandle?.substring("in".length) ?? "0"),
         }));
     }
 
