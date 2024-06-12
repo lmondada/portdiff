@@ -191,13 +191,13 @@ class RFGraph {
         }).find((edgeIds) => edgeIds.length > 0)?.[0];
     }
 
-    isValidConnection(conn: Connection) {
+    isValidConnection(conn: Connection): boolean {
         const sourceNode = this.nodes.find((node) => node.id === conn.source);
         const targetNode = this.nodes.find((node) => node.id === conn.target);
         const isActive = (n: WasmNode) => n.type !== "External";
         return (
-            sourceNode &&
-            targetNode &&
+            typeof sourceNode !== "undefined" &&
+            typeof targetNode !== "undefined" &&
             isActive(sourceNode) &&
             isActive(targetNode)
         );

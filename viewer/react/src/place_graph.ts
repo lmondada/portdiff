@@ -56,21 +56,21 @@ export function unplaceNode(node: PlacedWasmNode): WasmNode {
     } as WasmNode;
 }
 
-export function placedEdges(edges: WasmEdge[]): PlacedWasmEdge[] {
-    return edges.map((edge) => ({
-        ...edge,
-        sourceHandle: `out${edge.sourceHandle}`,
-        targetHandle: `in${edge.targetHandle}`,
-    }));
-}
+// export function placedEdges(edges: WasmEdge[]): PlacedWasmEdge[] {
+//     return edges.map((edge) => ({
+//         ...edge,
+//         sourceHandle: `out${edge.sourceHandle}`,
+//         targetHandle: `in${edge.targetHandle}`,
+//     }));
+// }
 
-export function unplaceEdge(edge: PlacedWasmEdge): WasmEdge {
-    return {
-        ...edge,
-        sourceHandle: parseInt(edge.sourceHandle.substring("out".length)),
-        targetHandle: parseInt(edge.targetHandle.substring("in".length)),
-    };
-}
+// export function unplaceEdge(edge: PlacedWasmEdge): WasmEdge {
+//     return {
+//         ...edge,
+//         sourceHandle: parseInt(edge.sourceHandle.substring("out".length)),
+//         targetHandle: parseInt(edge.targetHandle.substring("in".length)),
+//     };
+// }
 
 export function set_port_numbers(g: WasmGraph) {
     // Set the number of ports

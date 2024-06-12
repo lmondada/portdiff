@@ -1,0 +1,50 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Change this to your default branch
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Git
+        run: |
+          git config --global user.email "ignore@this.net"
+          git config --global user.name "GitHub Actions"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14" # Specify the Node.js version
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build Rust to WebAssembly
+        run: cd viewer/wasm && wasm-pack build --out-dir ../wasm-build --target web
+
+      - name: Install dependencies
+        run: cd viewer/react && npm install
+
+      - name: Build React app
+        run: cd viewer/react && npm run deploy
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: viewer/react/dist # The folder the action should deploy.
