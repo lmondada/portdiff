@@ -2,8 +2,7 @@ import { Edge, XYPosition } from "reactflow";
 
 export const node_type_name = "portdiff" as const;
 
-import { init_app, rewrite, select_nodes, select_diffs, hierarchy, current_graph } from "wasm";
-import place_graph from "./place_graph";
+import { init_app, rewrite, select_nodes, select_diffs, hierarchy, current_graph, expand_boundary } from "wasm";
 import { CSSProperties } from "react";
 
 export interface InternalNodeData {
@@ -123,3 +122,6 @@ export function currentGraph(): WasmGraph {
     return JSON.parse(current_graph());
 }
 
+export function expandBoundary(boundaryNode: string) {
+    expand_boundary(boundaryNode);
+}

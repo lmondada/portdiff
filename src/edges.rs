@@ -17,6 +17,12 @@ pub(super) enum EdgeEnd {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BoundaryEdge(pub(super) usize);
 
+impl From<usize> for BoundaryEdge {
+    fn from(value: usize) -> Self {
+        Self(value)
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InternalEdge(pub(super) usize);
 

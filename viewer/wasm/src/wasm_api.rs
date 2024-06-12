@@ -105,6 +105,19 @@ pub fn current_graph() -> Result<String, String> {
     app_state().to_json()
 }
 
+#[wasm_bindgen]
+pub fn expand_boundary(boundary_id: String) -> Result<(), String> {
+    let boundary_id: Uuid = serde_json::from_str(&format!("\"{}\"", boundary_id))
+        .map_err(|e| format!("Error parsing boundary id: {}\n{}", boundary_id, e))?;
+    let edge = app_state()
+        .find_boundary_edge(boundary_id)
+        .ok_or("Boundary edge not found".to_string())?;
+    app_state().current().expand(edge).for_each(|diff| {
+        app_state_mut().commit(diff);
+    });
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

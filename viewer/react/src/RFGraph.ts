@@ -56,7 +56,6 @@ class RFGraph {
     }
 
     getPlaced(isEditMode: boolean): [Node[], Edge[]] {
-        console.log("getplaced: ", this.edges);
         if (isEditMode) {
             return [this.nodes, this.edges];
         } else {
@@ -234,7 +233,7 @@ function useRFGraph({ nodes, edges }: WasmGraph, positions: Record<string, XYPos
         if (changes.length !== 0) {
             setGraphState(g => g.applyEdgesChange(changes, setUpdatedPortCounts));
         }
-    }, [setGraphState, setUpdatedPortCounts]);
+    }, [graph, setGraphState, setUpdatedPortCounts]);
 
     const appendNode = useCallback((node: PlacedWasmNode) => {
         setGraphState(g => g.applyAddNode(node, setUpdatedPortCounts));
@@ -273,7 +272,12 @@ function useRFGraph({ nodes, edges }: WasmGraph, positions: Record<string, XYPos
             onDoubleClick,
         },
         viewHandlers: {
-            onNodesChange: onNodesChangeSelectOnly
+            onNodesChange: onNodesChangeSelectOnly,
+            onEdgesChange: () => { },
+            // onConnect: () => { },
+            // onInit: () => { },
+            // isValidConnection: () => true,
+            // onDoubleClick: () => { },
         }
     };
 }

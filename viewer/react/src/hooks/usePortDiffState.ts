@@ -1,8 +1,9 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
-import { initApp, rewriteGraph, selectNodes, currentGraph, WasmEdge } from "../wasm_api";
-import { NodeChange, NodeSelectionChange } from "reactflow";
+import { initApp, rewriteGraph, selectNodes, currentGraph, WasmEdge, expandBoundary, WasmGraph } from "../wasm_api";
+import { Edge, NodeChange, NodeSelectionChange } from "reactflow";
 import useRFGraph from "../RFGraph";
 import placeGraph from "../place_graph";
+import RFGraph from "../RFGraph";
 
 /** A communication queue to update port counts */
 function useUpdatePortCounts() {
@@ -32,6 +33,18 @@ function usePortDiffState(updatePortDiff: boolean, sendUpdateHierarchy: () => vo
     const initGraph = useMemo(() => initApp(), []);
     const initPositions = useMemo(() => placeGraph(initGraph), [initGraph]);
     const { graph, graphActions, editHandlers, viewHandlers } = useRFGraph(initGraph, initPositions, pushUpdatePortCounts);
+
+    const onEdgeDoubleClick = useCallback((event: React.MouseEvent<MouseEvent>, edge: Edge) => {
+        console.log("onEdgeDoubleClick: ", edge);
+        try {
+            expandBoundary(edge.id);
+        } catch (e) {
+            console.error(e);
+            return;
+        }
+        sendUpdateHierarchy();
+    }, [sendUpdateHierarchy]);
+    (viewHandlers as any).onEdgeDoubleClick = onEdgeDoubleClick;
 
     // Update whether state is committed
     useEffect(() => {

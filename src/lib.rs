@@ -4,6 +4,7 @@ mod unique_vertex;
 
 use std::fmt::Debug;
 
+pub use edges::BoundaryEdge;
 pub use port_diff::PortDiff;
 pub use unique_vertex::UniqueVertex;
 

@@ -44,11 +44,12 @@ export function removeBoundary<
         return targetNode.type !== "Boundary" && sourceNode.type !== "Boundary";
     });
 
-    const boundaryEdges = Object.values(boundaryEnds).map(({ source, sourceHandle, target, targetHandle }) => {
+    // use the boundary ID for the edge ID so we can recover it later
+    const boundaryEdges = Object.entries(boundaryEnds).map(([boundaryId, { source, sourceHandle, target, targetHandle }]) => {
         if (!source || !target) {
             return null;
         }
-        return { id: `${source}-${target}`, source, sourceHandle, target, targetHandle, style: dashedStyle };
+        return { id: boundaryId, source, sourceHandle, target, targetHandle, style: dashedStyle };
     }).filter((edge) => edge !== null) as { id: string, source: string, sourceHandle: P, target: string, targetHandle: P }[];
 
     const nodesNoBoundary = nodes.filter((node) => node.type !== "Boundary");

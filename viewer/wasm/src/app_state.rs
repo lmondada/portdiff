@@ -4,7 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
-use portdiff::UniqueVertex;
+use portdiff::{BoundaryEdge, UniqueVertex};
 use uuid::Uuid;
 
 use crate::{
@@ -50,6 +50,13 @@ impl AppState {
 
     pub(crate) fn vertex_origin(&self) -> &HashMap<Uuid, Uuid> {
         &self.vertex_origin
+    }
+
+    pub(crate) fn find_boundary_edge(&self, boundary_id: Uuid) -> Option<BoundaryEdge> {
+        self.current_boundary
+            .iter()
+            .position(|&id| id == boundary_id)
+            .map(BoundaryEdge::from)
     }
 
     pub(crate) fn init() -> Self {
