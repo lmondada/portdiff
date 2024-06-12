@@ -4,6 +4,7 @@ export const node_type_name = "portdiff" as const;
 
 import { init_app, rewrite, select_nodes, select_diffs, hierarchy, current_graph } from "wasm";
 import place_graph from "./place_graph";
+import { CSSProperties } from "react";
 
 export interface InternalNodeData {
     port_diff_id: string;
@@ -45,6 +46,7 @@ export interface WasmEdge {
     target: string;
     sourceHandle: number;
     targetHandle: number;
+    style: string | undefined;
 }
 export interface PlacedWasmEdge {
     id: string;
@@ -52,6 +54,7 @@ export interface PlacedWasmEdge {
     target: string;
     sourceHandle: string;
     targetHandle: string;
+    style: CSSProperties | undefined;
 }
 
 export interface WasmGraph {

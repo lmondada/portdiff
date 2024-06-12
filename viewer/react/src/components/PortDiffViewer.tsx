@@ -50,6 +50,7 @@ function PortDiffViewer({
     const bg_opts = pick_background(isEditMode);
     const flow_opts = pick_flow_options(isEditMode);
 
+    console.log(edges);
     return (
         <div style={{ height: "100%" }}>
             <ReactFlow

@@ -82,6 +82,10 @@ impl AppState {
     pub(crate) fn convert_to_graph(&self, port_diff: &PortDiff) -> Result<Graph, String> {
         let edges = port_diff.extract();
         let internal_vertices = BTreeSet::from_iter(port_diff.vertices().map(|v| v.id()));
+        let internal_edges: BTreeSet<_> = port_diff
+            .internal_edges()
+            .map(|e| port_diff.internal_edge(&e))
+            .collect();
         // Construct nodes, distinguish internal & external
         let mut nodes = edges
             .iter()
@@ -119,15 +123,21 @@ impl AppState {
             .zip(&boundary_nodes)
             .flat_map(|(index, boundary)| {
                 [
-                    Edge::from_boundary(&edges[index].left, boundary),
-                    Edge::from_boundary(&edges[index].right, boundary),
+                    Edge::from_boundary(&edges[index].left, boundary, None),
+                    Edge::from_boundary(&edges[index].right, boundary, Some("dashed".to_string())),
                 ]
             })
             .collect_vec();
         nodes.extend(boundary_nodes);
         let edges = split_boundary_edges
             .into_iter()
-            .chain(other_edges.into_iter().map(|e| Edge::from(&e)))
+            .chain(other_edges.into_iter().map(|e| {
+                let mut ret = Edge::from(&e);
+                if !internal_edges.contains(&e) {
+                    ret.style = Some("dashed".to_string());
+                }
+                ret
+            }))
             .collect_vec();
         Ok(Graph { nodes, edges })
     }

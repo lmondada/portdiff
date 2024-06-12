@@ -1,3 +1,4 @@
+import { dashedStyle } from "./RFGraph";
 import { WasmEdge, WasmNode } from "./wasm_api";
 
 
@@ -47,7 +48,7 @@ export function removeBoundary<
         if (!source || !target) {
             return null;
         }
-        return { id: `${source}-${target}`, source, sourceHandle, target, targetHandle };
+        return { id: `${source}-${target}`, source, sourceHandle, target, targetHandle, style: dashedStyle };
     }).filter((edge) => edge !== null) as { id: string, source: string, sourceHandle: P, target: string, targetHandle: P }[];
 
     const nodesNoBoundary = nodes.filter((node) => node.type !== "Boundary");

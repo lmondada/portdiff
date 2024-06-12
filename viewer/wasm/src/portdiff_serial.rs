@@ -96,6 +96,7 @@ pub(crate) struct Edge {
     pub(crate) source_handle: usize,
     pub(crate) target: Uuid,
     pub(crate) target_handle: usize,
+    pub(crate) style: Option<String>,
 }
 
 impl Edge {
@@ -104,6 +105,7 @@ impl Edge {
         source_handle: usize,
         target: Uuid,
         target_handle: usize,
+        style: Option<String>,
     ) -> Self {
         let id = Uuid::new_v4();
         Self {
@@ -112,10 +114,11 @@ impl Edge {
             target,
             source_handle,
             target_handle,
+            style,
         }
     }
 
-    pub(crate) fn from_ports(p1: &Port, p2: &Port) -> Self {
+    pub(crate) fn from_ports(p1: &Port, p2: &Port, style: Option<String>) -> Self {
         let (source, target) = match (p1.port, p2.port) {
             (PortLabel::Out(_), PortLabel::In(_)) => (p1, p2),
             (PortLabel::In(_), PortLabel::Out(_)) => (p2, p1),
@@ -126,10 +129,11 @@ impl Edge {
             source.port.index(),
             target.node.id(),
             target.port.index(),
+            style,
         )
     }
 
-    pub(crate) fn from_boundary(port: &Port, boundary: &Node) -> Self {
+    pub(crate) fn from_boundary(port: &Port, boundary: &Node, style: Option<String>) -> Self {
         let boundary_label = match port.port {
             PortLabel::Out(_) => PortLabel::In(0),
             PortLabel::In(_) => PortLabel::Out(0),
@@ -138,13 +142,13 @@ impl Edge {
             node: UniqueVertex::from_id(boundary.id()),
             port: boundary_label,
         };
-        Edge::from_ports(port, &boundary_port)
+        Edge::from_ports(port, &boundary_port, style)
     }
 }
 
 impl From<&PortEdge> for Edge {
     fn from(edge: &PortEdge) -> Self {
-        Edge::from_ports(&edge.left, &edge.right)
+        Edge::from_ports(&edge.left, &edge.right, None)
     }
 }
 

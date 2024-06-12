@@ -1,7 +1,7 @@
 import { Node, Edge, XYPosition, NodeChange, applyNodeChanges, ReactFlowInstance, EdgeChange, applyEdgeChanges, Connection } from "reactflow";
 import { ExternalNode, InternalNode, PlacedWasmEdge, PlacedWasmNode, WasmEdge, WasmGraph, WasmNode } from "./wasm_api";
 import { removeBoundary } from "./boundary";
-import { useCallback, useEffect, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 class RFGraph {
@@ -27,6 +27,7 @@ class RFGraph {
             target: edge.target,
             sourceHandle: `out${edge.sourceHandle}`,
             targetHandle: `in${edge.targetHandle}`,
+            style: edgeStyle(edge.style),
         }));
         return new RFGraph(placedNodes, placedEdges, positions);
     }
@@ -46,6 +47,7 @@ class RFGraph {
             target: edge.target,
             sourceHandle: parseInt(edge.sourceHandle?.substring("out".length) ?? "0"),
             targetHandle: parseInt(edge.targetHandle?.substring("in".length) ?? "0"),
+            style: undefined,
         }));
     }
 
@@ -54,6 +56,7 @@ class RFGraph {
     }
 
     getPlaced(isEditMode: boolean): [Node[], Edge[]] {
+        console.log("getplaced: ", this.edges);
         if (isEditMode) {
             return [this.nodes, this.edges];
         } else {
@@ -79,6 +82,7 @@ class RFGraph {
             ...edge,
             sourceHandle: `out${edge.sourceHandle}`,
             targetHandle: `in${edge.targetHandle}`,
+            style: edgeStyle(edge.style)
         }));
         let newGraph = new RFGraph(placedNodes, placedEdges, this.positions);
         const updatedNodeIds = newGraph.updatePortCounts();
@@ -366,4 +370,21 @@ function getEndsFromEdgeChange(
     const srcNode = nodes.find((node) => node.id === edge.source);
     const tgtNode = nodes.find((node) => node.id === edge.target);
     return { srcNode, tgtNode };
+}
+
+export const dashedStyle: CSSProperties = {
+    stroke: '#808080',
+    strokeWidth: 1,
+    strokeDasharray: '2,2'
+}
+
+function edgeStyle(style: string | undefined) {
+    switch (style) {
+        case "dashed":
+            return dashedStyle;
+        default: return {
+            stroke: '#000',
+            strokeWidth: 1,
+        };
+    }
 }
