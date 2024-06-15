@@ -119,20 +119,43 @@ impl AppState {
             .iter()
             .map(|&id| Node::new_boundary(id))
             .collect_vec();
+        let mut boundary_edges_map: BTreeMap<usize, Vec<&Node>> = BTreeMap::new();
+        for (&ind, boundary) in boundary_edges_ind.iter().zip(boundary_nodes.iter()) {
+            boundary_edges_map.entry(ind).or_default().push(boundary);
+        }
         let other_edges = edges
             .iter()
             .enumerate()
-            .filter(|(i, _)| !boundary_edges_ind.contains(i))
+            .filter(|(i, _)| !boundary_edges_map.contains_key(i))
             .map(|(_, e)| e.clone())
             .collect_vec();
-        let split_boundary_edges = boundary_edges_ind
+        let split_boundary_edges = boundary_edges_map
             .into_iter()
-            .zip(&boundary_nodes)
-            .flat_map(|(index, boundary)| {
-                [
-                    Edge::from_boundary(&edges[index].left, boundary, None),
-                    Edge::from_boundary(&edges[index].right, boundary, Some("dashed".to_string())),
-                ]
+            .flat_map(|(index, boundary_nodes)| {
+                assert!(!boundary_nodes.is_empty());
+                let mut new_edges = Vec::new();
+                new_edges.push(Edge::from_boundary(
+                    &edges[index].left,
+                    boundary_nodes.first().unwrap(),
+                    None,
+                ));
+                for (bd1, bd2) in boundary_nodes.iter().tuple_windows() {
+                    if matches!(&edges[index].left.port, PortLabel::Out(_)) {
+                        new_edges.push(Edge::from_nodes(bd1, bd2, Some("dashed".to_string())));
+                    } else {
+                        new_edges.push(Edge::from_nodes(bd2, bd1, Some("dashed".to_string())));
+                    }
+                }
+                new_edges.push(Edge::from_boundary(
+                    &edges[index].right,
+                    boundary_nodes.last().unwrap(),
+                    if boundary_nodes.len() < 2 {
+                        Some("dashed".to_string())
+                    } else {
+                        None
+                    },
+                ));
+                new_edges
             })
             .collect_vec();
         nodes.extend(boundary_nodes);
@@ -178,10 +201,7 @@ impl AppState {
 }
 
 /// TODO: handle several identical ports
-fn get_boundary_edges(
-    edges: &[PortEdge],
-    port_diff: &portdiff::PortDiff<UniqueVertex, PortLabel>,
-) -> Result<Vec<usize>, String> {
+fn get_boundary_edges(edges: &[PortEdge], port_diff: &PortDiff) -> Result<Vec<usize>, String> {
     let internal_edges: BTreeSet<_> = port_diff
         .internal_edges()
         .map(|e| port_diff.internal_edge(&e))

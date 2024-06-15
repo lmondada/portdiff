@@ -157,38 +157,14 @@ class RFGraph {
     }
 
     findEdgeToRemove() {
-        // A map from boundary node ID to all edge ID that connect to it to internal nodes.
-        const boundaryInternalEdges = new Map<string, string[]>();
-        // A map from boundary node ID to all edge ID that connect to it to external nodes.
-        const boundaryExternalEdges = new Map<string, string[]>();
-
-        for (const edge of this.edges) {
-            const [srcId, tgtId] = [edge.source, edge.target];
-            const srcType = this.nodes.find((node) => node.id === srcId)?.type;
-            const tgtType = this.nodes.find((node) => node.id === tgtId)?.type;
-            if (!srcType || !tgtType || srcType !== "Boundary" && tgtType !== "Boundary") {
-                continue;
-            }
-            if (srcType === "Internal" && tgtType === "Boundary") {
-                boundaryInternalEdges.set(tgtId, [...(boundaryInternalEdges.get(tgtId) || []), edge.id]);
-            } else if (srcType === "Boundary" && tgtType === "Internal") {
-                boundaryInternalEdges.set(srcId, [...(boundaryInternalEdges.get(srcId) || []), edge.id]);
-            } else if (srcType === "External" && tgtType === "Boundary") {
-                boundaryExternalEdges.set(tgtId, [...(boundaryExternalEdges.get(tgtId) || []), edge.id]);
-            } else if (srcType === "Boundary" && tgtType === "External") {
-                boundaryExternalEdges.set(srcId, [...(boundaryExternalEdges.get(srcId) || []), edge.id]);
-            } else if (srcType === "Boundary" && tgtType === "Boundary") {
-                boundaryInternalEdges.set(srcId, [...(boundaryInternalEdges.get(srcId) || []), edge.id]);
-                boundaryInternalEdges.set(tgtId, [...(boundaryInternalEdges.get(tgtId) || []), edge.id]);
+        for (const edgeEnd of ["source", "target"] as ("source" | "target")[]) {
+            for (const node of this.nodes.filter(n => n.type === "Boundary")) {
+                const adjacentEdges = this.edges.filter(e => e[edgeEnd] === node.id);
+                if (adjacentEdges.length > 1) {
+                    return adjacentEdges[1].id;
+                }
             }
         }
-
-        // Find a boundary edge that connects to a boundary with more than one edge..
-        return [
-            ...boundaryInternalEdges.values(), ...boundaryExternalEdges.values()
-        ].map((edgeIds) => {
-            return edgeIds.slice(1);
-        }).find((edgeIds) => edgeIds.length > 0)?.[0];
     }
 
     isValidConnection(conn: Connection): boolean {
@@ -208,7 +184,6 @@ function useRFGraph({ nodes, edges }: WasmGraph, positions: Record<string, XYPos
     const [graph, setGraphState] = useState<RFGraph>(RFGraph.initGraph({ nodes, edges }, positions));
 
     const setGraph = useCallback((newGraph: WasmGraph) => {
-        console.log("setGraph:", newGraph);
         setGraphState(g => g.applySetGraph(newGraph, setUpdatedPortCounts));
     }, [setGraphState, setUpdatedPortCounts]);
 

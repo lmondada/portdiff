@@ -8,30 +8,29 @@ export function removeBoundary<
     nodes: N[],
     edges: { id: string, source: string, target: string, sourceHandle: P, targetHandle: P }[],
 ): [N[], { id: string, source: string, target: string, sourceHandle?: P, targetHandle?: P }[]] {
-    let boundaryEnds: {
-        [key: string]: {
-            source: string | undefined,
-            sourceHandle: P | undefined,
-            target: string | undefined,
-            targetHandle: P | undefined,
-        }
-    } = {};
+    const boundaryEdges = [];
     for (const edge of edges) {
-        const targetNode = nodes.find((node) => node.id === edge.target);
+        const fstEdge = edge;
+        let lastEdge = edge as typeof edge | undefined;
         const sourceNode = nodes.find((node) => node.id === edge.source);
-        if (sourceNode && targetNode?.type === "Boundary") {
-            if (!boundaryEnds[targetNode.id]) {
-                boundaryEnds[targetNode.id] = { source: undefined, sourceHandle: undefined, target: undefined, targetHandle: undefined };
-            }
-            boundaryEnds[targetNode.id].source = edge.source;
-            boundaryEnds[targetNode.id].sourceHandle = edge.sourceHandle ?? undefined;
+        let targetNode = nodes.find((node) => node.id === lastEdge?.target);
+        if (!sourceNode || !targetNode || targetNode.type !== "Boundary" || sourceNode.type === "Boundary") {
+            continue
         }
-        if (targetNode && sourceNode?.type === "Boundary") {
-            if (!boundaryEnds[sourceNode.id]) {
-                boundaryEnds[sourceNode.id] = { source: undefined, sourceHandle: undefined, target: undefined, targetHandle: undefined };
-            }
-            boundaryEnds[sourceNode.id].target = edge.target;
-            boundaryEnds[sourceNode.id].targetHandle = edge.targetHandle ?? undefined;
+        const boundaryId = targetNode.id;
+        while (targetNode?.type === "Boundary") {
+            lastEdge = edges.find(e => e.source === targetNode?.id);
+            targetNode = nodes.find((node) => node.id === lastEdge?.target);
+        }
+        if (typeof lastEdge !== "undefined") {
+            boundaryEdges.push({
+                id: `${boundaryId}-1`,
+                source: fstEdge.source,
+                sourceHandle: fstEdge.sourceHandle,
+                target: lastEdge.target,
+                targetHandle: lastEdge.targetHandle,
+                style: dashedStyle,
+            });
         }
     }
 
@@ -45,12 +44,12 @@ export function removeBoundary<
     });
 
     // use the boundary ID for the edge ID so we can recover it later
-    const boundaryEdges = Object.entries(boundaryEnds).map(([boundaryId, { source, sourceHandle, target, targetHandle }]) => {
-        if (!source || !target) {
-            return null;
-        }
-        return { id: boundaryId, source, sourceHandle, target, targetHandle, style: dashedStyle };
-    }).filter((edge) => edge !== null) as { id: string, source: string, sourceHandle: P, target: string, targetHandle: P }[];
+    // const boundaryEdges = Object.entries(boundaryEnds).map(([boundaryId, { source, sourceHandle, target, targetHandle }]) => {
+    //     if (!source || !target) {
+    //         return null;
+    //     }
+    //     return { id: boundaryId, source, sourceHandle, target, targetHandle, style: dashedStyle };
+    // }).filter((edge) => edge !== null) as { id: string, source: string, sourceHandle: P, target: string, targetHandle: P }[];
 
     const nodesNoBoundary = nodes.filter((node) => node.type !== "Boundary");
     const edgesNoBoundary = [...boundaryEdges, ...nonBoundaryEdges];

@@ -40,7 +40,6 @@ export function placeGraph<
 }
 
 export function placedNodes(nodes: WasmNode[], positions: Record<string, XYPosition>, selectedNodes: Set<string>): PlacedWasmNode[] {
-    console.log(selectedNodes);
     return nodes.map((node) => ({
         ...node,
         position: positions[node.id],

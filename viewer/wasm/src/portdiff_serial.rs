@@ -144,6 +144,10 @@ impl Edge {
         };
         Edge::from_ports(port, &boundary_port, style)
     }
+
+    pub(crate) fn from_nodes(node1: &Node, node2: &Node, style: Option<String>) -> Self {
+        Edge::new(node1.id(), 0, node2.id(), 0, style)
+    }
 }
 
 impl From<&PortEdge> for Edge {

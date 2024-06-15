@@ -9,7 +9,6 @@ function UpdatePorts({ drainUpdatePortCounts }: UpdatePortsProps) {
     const updateNodeInternals = useUpdateNodeInternals();
     useEffect(() => {
         const updatedPortCounts = drainUpdatePortCounts();
-        console.log("updatedPortCounts", updatedPortCounts);
         if (updatedPortCounts.length > 0) {
             updateNodeInternals(updatedPortCounts);
         }
