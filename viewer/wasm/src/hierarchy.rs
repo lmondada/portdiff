@@ -2,18 +2,18 @@ use std::collections::HashMap;
 
 use uuid::Uuid;
 
-use crate::{AppState, PortDiff};
+use crate::{port_diff_id::PortDiffId, AppState, PortDiff};
 
 impl AppState {
     /// Compute the hierarchy of committed diffs.
-    pub(crate) fn hierarchy(&self) -> Vec<(Uuid, Uuid)> {
-        let vertices = self.committed().keys().copied().collect::<Vec<_>>();
+    pub(crate) fn hierarchy(&self) -> Vec<(PortDiffId, PortDiffId)> {
+        let vertices = self.committed().keys().cloned().collect::<Vec<_>>();
         let vertex_origin: HashMap<_, _> = self
             .vertex_origin()
             .iter()
-            .map(|(&v, diff_id)| {
+            .map(|(v, diff_id)| {
                 let diff_ind = vertices.iter().position(|uuid| uuid == diff_id).unwrap();
-                (v, diff_ind)
+                (v.clone(), diff_ind)
             })
             .collect();
 
@@ -29,7 +29,7 @@ impl AppState {
         for i in 0..diffs.len() {
             for j in 0..diffs.len() {
                 if min_adj[i][j] {
-                    edges.push((vertices[i], vertices[j]));
+                    edges.push((vertices[i].clone(), vertices[j].clone()));
                 }
             }
         }
@@ -37,7 +37,10 @@ impl AppState {
     }
 }
 
-fn adjacency_matrix(diffs: &[&PortDiff], vertex_origins: &HashMap<Uuid, usize>) -> Vec<Vec<bool>> {
+fn adjacency_matrix(
+    diffs: &[&PortDiff],
+    vertex_origins: &HashMap<String, usize>,
+) -> Vec<Vec<bool>> {
     let n = diffs.len();
     let mut adj = vec![vec![false; n]; n];
     for i in 0..n {
@@ -51,11 +54,11 @@ fn adjacency_matrix(diffs: &[&PortDiff], vertex_origins: &HashMap<Uuid, usize>) 
 fn add_deps_from_vertices(
     adj: &mut [Vec<bool>],
     diffs: &[&PortDiff],
-    vertex_origins: &HashMap<Uuid, usize>,
+    vertex_origins: &HashMap<String, usize>,
 ) {
     for (i, diff) in diffs.iter().enumerate() {
         for v in diff.vertices() {
-            if let Some(&origin) = vertex_origins.get(&v.id()) {
+            if let Some(&origin) = vertex_origins.get(v.id()) {
                 adj[i][origin] = true;
             }
         }

@@ -1,12 +1,12 @@
 mod edges;
 pub mod port_diff;
-mod unique_vertex;
+mod vertex;
 
 use std::fmt::Debug;
 
 pub use edges::BoundaryEdge;
 pub use port_diff::PortDiff;
-pub use unique_vertex::UniqueVertex;
+pub use vertex::{DetVertex, DetVertexCreator, UniqueVertex};
 
 /// A connection point for an edge
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]

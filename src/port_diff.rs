@@ -148,8 +148,8 @@ impl<V: Eq + Clone + Ord, P: Clone> PortDiff<V, P> {
 
     pub fn extract(&self) -> Vec<PortEdge<V, P>>
     where
-        V: Clone + std::fmt::Debug,
-        P: Clone + Eq + std::fmt::Debug,
+        V: Clone,
+        P: Clone + Eq,
     {
         if self.data.boundary_ports.is_empty() {
             return self.data.edges.clone();

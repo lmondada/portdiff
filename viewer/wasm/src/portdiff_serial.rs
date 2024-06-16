@@ -1,12 +1,12 @@
-use portdiff::UniqueVertex;
+use portdiff::DetVertex;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{Port, PortEdge, PortLabel};
+use crate::{port_diff_id::PortDiffId, Port, PortEdge, PortLabel};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 struct InternalNodeData {
-    port_diff_id: Uuid,
+    port_diff_id: String,
     label: String,
 }
 
@@ -32,50 +32,50 @@ pub(crate) enum Node {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct InternalNode {
-    id: Uuid,
+    id: String,
     data: InternalNodeData,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct BoundaryNode {
-    id: Uuid,
+    id: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct ExternalNode {
-    id: Uuid,
+    id: String,
     data: ExternalNodeData,
 }
 
 impl Node {
-    pub(crate) fn new_internal(id: Uuid, port_diff_id: Uuid) -> Self {
+    pub(crate) fn new_internal(id: String, port_diff_id: PortDiffId) -> Self {
+        let label = id.clone();
         Self::Internal(InternalNode {
             id,
             data: InternalNodeData {
-                port_diff_id,
-                label: id.to_string(),
+                port_diff_id: port_diff_id.0,
+                label,
             },
         })
     }
 
-    pub(crate) fn new_external(id: Uuid) -> Self {
+    pub(crate) fn new_external(id: String) -> Self {
+        let label = id.clone();
         Self::External(ExternalNode {
             id,
-            data: ExternalNodeData {
-                label: id.to_string(),
-            },
+            data: ExternalNodeData { label },
         })
     }
 
-    pub(crate) fn new_boundary(id: Uuid) -> Self {
+    pub(crate) fn new_boundary(id: String) -> Self {
         Self::Boundary(BoundaryNode { id })
     }
 
-    pub(crate) fn id(&self) -> Uuid {
+    pub(crate) fn id(&self) -> &str {
         match self {
-            Self::Internal(node) => node.id,
-            Self::External(node) => node.id,
-            Self::Boundary(node) => node.id,
+            Self::Internal(node) => &node.id,
+            Self::External(node) => &node.id,
+            Self::Boundary(node) => &node.id,
         }
     }
 
@@ -92,18 +92,18 @@ impl Node {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Edge {
     pub(crate) id: Uuid,
-    pub(crate) source: Uuid,
+    pub(crate) source: String,
     pub(crate) source_handle: usize,
-    pub(crate) target: Uuid,
+    pub(crate) target: String,
     pub(crate) target_handle: usize,
     pub(crate) style: Option<String>,
 }
 
 impl Edge {
     pub(crate) fn new(
-        source: Uuid,
+        source: String,
         source_handle: usize,
-        target: Uuid,
+        target: String,
         target_handle: usize,
         style: Option<String>,
     ) -> Self {
@@ -125,9 +125,9 @@ impl Edge {
             _ => panic!("invalid port edge"),
         };
         Edge::new(
-            source.node.id(),
+            source.node.id().to_string(),
             source.port.index(),
-            target.node.id(),
+            target.node.id().to_string(),
             target.port.index(),
             style,
         )
@@ -139,14 +139,14 @@ impl Edge {
             PortLabel::In(_) => PortLabel::Out(0),
         };
         let boundary_port = Port {
-            node: UniqueVertex::from_id(boundary.id()),
+            node: DetVertex(boundary.id().to_string()),
             port: boundary_label,
         };
         Edge::from_ports(port, &boundary_port, style)
     }
 
     pub(crate) fn from_nodes(node1: &Node, node2: &Node, style: Option<String>) -> Self {
-        Edge::new(node1.id(), 0, node2.id(), 0, style)
+        Edge::new(node1.id().to_string(), 0, node2.id().to_string(), 0, style)
     }
 }
 
@@ -160,11 +160,11 @@ impl From<&Edge> for PortEdge {
     fn from(edge: &Edge) -> Self {
         PortEdge {
             left: Port {
-                node: UniqueVertex::from_id(edge.source),
+                node: DetVertex(edge.source.clone()),
                 port: PortLabel::Out(edge.source_handle),
             },
             right: Port {
-                node: UniqueVertex::from_id(edge.target),
+                node: DetVertex(edge.target.clone()),
                 port: PortLabel::In(edge.target_handle),
             },
         }

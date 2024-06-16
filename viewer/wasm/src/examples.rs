@@ -1,17 +1,23 @@
+use std::iter::repeat_with;
+
 use itertools::Itertools;
-use portdiff::UniqueVertex;
+use portdiff::{DetVertex, DetVertexCreator, Port, PortDiff, PortEdge};
 
-use crate::{Port, PortDiff, PortEdge, PortLabel};
+use crate::PortLabel;
 
-pub fn port_diff() -> PortDiff {
-    let v = (0..(3 + 2 + 3)).map(|_| UniqueVertex::new()).collect_vec();
-    let create_edge = |src, src_port, tgt, tgt_port| PortEdge {
+pub fn gen_det_vertices(creator: &mut DetVertexCreator) -> impl Iterator<Item = DetVertex> + '_ {
+    repeat_with(|| creator.create())
+}
+
+pub fn port_diff<V: Clone + Ord>(gen_vertices: impl Iterator<Item = V>) -> PortDiff<V, PortLabel> {
+    let v = gen_vertices.take(3 + 2 + 3).collect_vec();
+    let create_edge = |src: usize, src_port, tgt: usize, tgt_port| PortEdge {
         left: Port {
-            node: v[src],
+            node: v[src].clone(),
             port: PortLabel::Out(src_port),
         },
         right: Port {
-            node: v[tgt],
+            node: v[tgt].clone(),
             port: PortLabel::In(tgt_port),
         },
     };
@@ -22,36 +28,3 @@ pub fn port_diff() -> PortDiff {
         .collect_vec();
     PortDiff::with_no_boundary(edges)
 }
-
-// pub(crate) fn graph() -> Graph {
-//     let delta = 200;
-//     let internals = (0..2)
-//         .map(|i| Node::new_internal(0, delta * i + delta))
-//         .collect_vec();
-//     let externals = (0..3)
-//         .map(|i| Node::new_external(delta * i - delta, 0))
-//         .chain((0..3).map(|i| Node::new_external(delta * i - delta, 3 * delta)))
-//         .collect_vec();
-//     let boundary = (0..3)
-//         .map(|i| Node::new_boundary(delta * i - delta, delta / 2))
-//         .chain((0..3).map(|i| Node::new_boundary(delta * i - delta, 5 * delta / 2)))
-//         .collect_vec();
-//     let eb1 = externals[0..3]
-//         .iter()
-//         .zip(&boundary)
-//         .map(|(e, b)| Edge::new(e, b));
-//     let bi1 = boundary[0..3].iter().map(|b| Edge::new(b, &internals[0]));
-//     let ii = [Edge::new(&internals[0], &internals[1])];
-//     let ib2 = boundary[3..].iter().map(|b| Edge::new(&internals[1], b));
-//     let be2 = boundary[3..]
-//         .iter()
-//         .zip(&externals[3..])
-//         .map(|(b, e)| Edge::new(b, e));
-//     let edges = eb1.chain(bi1).chain(ii).chain(ib2).chain(be2).collect_vec();
-//     let nodes = internals
-//         .into_iter()
-//         .chain(externals)
-//         .chain(boundary)
-//         .collect_vec();
-//     Graph::new(nodes, edges)
-// }

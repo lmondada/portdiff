@@ -2,24 +2,25 @@ use std::{cell::RefCell, collections::BTreeMap, iter::repeat_with};
 
 use itertools::Itertools;
 
-use crate::{edges::DescendantEdges, Port, PortDiff, PortEdge, UniqueVertex};
+use crate::{
+    edges::DescendantEdges, DetVertex, DetVertexCreator, Port, PortDiff, PortEdge, UniqueVertex,
+};
 
 use super::PortDiffData;
 
-type V = UniqueVertex;
-
-impl<P: Clone + Ord> PortDiff<V, P> {
+impl<V: Ord + Clone, P: Clone + Ord> PortDiff<V, P> {
     /// Replace the internal edges with `new_edges`.
     ///
-    /// All vertices are given fresh vertex IDs.
+    /// All vertices are given fresh vertex IDs using `gen_new_vertices`.
     ///
     /// Optionally, indicate new boundary ports. The set of new boundary ports
     /// must be of the same length. If a boundary port is `None`, the existing
     /// boundary port is retained (using its new name).
-    pub fn rewrite(
+    pub fn rewrite_with_new_vertices(
         &self,
         new_edges: &[PortEdge<V, P>],
-        new_boundary_ports: Vec<Option<Port<V, P>>>,
+        new_boundary_ports: &[Option<Port<V, P>>],
+        gen_new_vertices: impl IntoIterator<Item = V>,
     ) -> Result<Self, String> {
         if new_boundary_ports.len() != self.data.boundary_ports.len() {
             return Err("Mismatching number of boundary ports".to_string());
@@ -29,15 +30,11 @@ impl<P: Clone + Ord> PortDiff<V, P> {
         }
 
         // Create new variable names.
-        let new_vertices: BTreeMap<_, _> = self
-            .vertices()
-            .copied()
-            .zip(repeat_with(|| UniqueVertex::new()))
-            .collect();
+        let new_vertices: BTreeMap<_, _> = self.vertices().cloned().zip(gen_new_vertices).collect();
 
         // Lift the vertex name change to ports
         let new_port = |Port { node, port }: &Port<_, P>| {
-            let &node = new_vertices.get(node).unwrap_or(node);
+            let node = new_vertices.get(node).unwrap_or(node).clone();
             Port {
                 node,
                 port: port.clone(),
@@ -59,7 +56,7 @@ impl<P: Clone + Ord> PortDiff<V, P> {
             .data
             .boundary_ports
             .iter()
-            .zip(&new_boundary_ports)
+            .zip(new_boundary_ports)
             .map(|(p, new_p)| new_p.as_ref().unwrap_or(p))
             .map(new_port)
             .collect();
@@ -79,6 +76,47 @@ impl<P: Clone + Ord> PortDiff<V, P> {
     }
 }
 
+impl<P: Clone + Ord> PortDiff<UniqueVertex, P> {
+    /// Replace the internal edges with `new_edges`.
+    ///
+    /// All vertices are given fresh vertex IDs.
+    ///
+    /// Optionally, indicate new boundary ports. The set of new boundary ports
+    /// must be of the same length. If a boundary port is `None`, the existing
+    /// boundary port is retained (using its new name).
+    pub fn rewrite(
+        &self,
+        new_edges: &[PortEdge<UniqueVertex, P>],
+        new_boundary_ports: &[Option<Port<UniqueVertex, P>>],
+    ) -> Result<Self, String> {
+        // Create a unique vertex generator.
+        let gen_new_vertices = repeat_with(|| UniqueVertex::new());
+
+        self.rewrite_with_new_vertices(new_edges, new_boundary_ports, gen_new_vertices)
+    }
+}
+
+impl<P: Clone + Ord> PortDiff<DetVertex, P> {
+    /// Replace the internal edges with `new_edges`.
+    ///
+    /// All vertices are given fresh vertex IDs using `vertex_creator`.
+    ///
+    /// Optionally, indicate new boundary ports. The set of new boundary ports
+    /// must be of the same length. If a boundary port is `None`, the existing
+    /// boundary port is retained (using its new name).
+    pub fn rewrite(
+        &self,
+        new_edges: &[PortEdge<DetVertex, P>],
+        new_boundary_ports: &[Option<Port<DetVertex, P>>],
+        vertex_creator: &mut DetVertexCreator,
+    ) -> Result<Self, String> {
+        // Create a unique vertex generator.
+        let gen_new_vertices = repeat_with(move || vertex_creator.create());
+
+        self.rewrite_with_new_vertices(new_edges, new_boundary_ports, gen_new_vertices)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
@@ -95,7 +133,7 @@ mod tests {
         let nodes = test_nodes();
         let child = PortDiff::with_nodes([nodes[0], nodes[1]], &root_diff);
         let grandchild = child
-            .rewrite(&[], vec![None; child.n_boundary_edges()])
+            .rewrite(&[], &vec![None; child.n_boundary_edges()])
             .unwrap();
         assert_eq!(grandchild.n_internal_edges(), 0);
         assert_eq!(grandchild.n_boundary_edges(), 1);

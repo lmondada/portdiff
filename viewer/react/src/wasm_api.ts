@@ -89,13 +89,14 @@ function validate_graph(g: WasmGraph) {
 }
 
 export function initApp(): WasmGraph {
+    console.log(`init_app()`);
     let g: WasmGraph = JSON.parse(init_app());
     validate_graph(g);
     return g;
 }
 
 export function rewriteGraph(edges: WasmEdge[]): WasmGraph {
-    console.log("rewrite:", JSON.stringify(edges));
+    console.log(`rewrite("${JSON.stringify(edges)}")`);
     const res = rewrite(JSON.stringify(edges));
     const g = JSON.parse(res);
     console.log("=>", g);
@@ -103,7 +104,7 @@ export function rewriteGraph(edges: WasmEdge[]): WasmGraph {
 }
 
 export function selectNodes(nodeIds: Set<string>): WasmGraph {
-    console.log(" select:", JSON.stringify(Array.from(nodeIds)));
+    console.log(`select_nodes("${JSON.stringify(Array.from(nodeIds))}")`);
     const res = select_nodes(JSON.stringify(Array.from(nodeIds)));
     const g = JSON.parse(res);
     console.log(" =>", g);
@@ -115,6 +116,7 @@ export function getHierarchy(): [string, string][] {
 }
 
 export function selectDiffs(diffIds: Set<string>) {
+    console.log(`select_diffs("${JSON.stringify(Array.from(diffIds))}")`);
     select_diffs(JSON.stringify(Array.from(diffIds)));
 }
 

@@ -20,7 +20,7 @@ pub enum MergeType {
     NoMerge,
 }
 
-impl<V: Eq + Clone + Ord + std::fmt::Debug, P: Clone + Eq + std::fmt::Debug> PortDiff<V, P> {
+impl<V: Eq + Clone + Ord, P: Clone + Eq> PortDiff<V, P> {
     pub fn merge(&self, other: &Self) -> Option<Self> {
         Some(PortDiff::new(self.merge_data(other)?))
     }
@@ -295,10 +295,10 @@ mod tests {
         let child_a = PortDiff::with_nodes([nodes[0], nodes[1]], &root_diff);
         let child_b = PortDiff::with_nodes([nodes[1], nodes[2], nodes[3]], &root_diff);
         let child_a = child_a
-            .rewrite(&[], vec![None; child_a.n_boundary_edges()])
+            .rewrite(&[], &vec![None; child_a.n_boundary_edges()])
             .unwrap();
         let child_b = child_b
-            .rewrite(&[], vec![None; child_b.n_boundary_edges()])
+            .rewrite(&[], &vec![None; child_b.n_boundary_edges()])
             .unwrap();
         assert_eq!(child_a.merge_type(&child_b), MergeType::NoMerge);
     }
@@ -309,10 +309,10 @@ mod tests {
         let child_a = PortDiff::with_nodes([nodes[0], nodes[1]], &root_diff);
         let child_b = PortDiff::with_nodes([nodes[2], nodes[3]], &root_diff);
         let child_a = child_a
-            .rewrite(&[], vec![None; child_a.n_boundary_edges()])
+            .rewrite(&[], &vec![None; child_a.n_boundary_edges()])
             .unwrap();
         let child_b = child_b
-            .rewrite(&[], vec![None; child_b.n_boundary_edges()])
+            .rewrite(&[], &vec![None; child_b.n_boundary_edges()])
             .unwrap();
         let merged = PortDiff::new(child_a.merge_disjoint(&child_b));
         assert_eq!(merged.n_boundary_edges(), 2);
@@ -330,7 +330,7 @@ mod tests {
         let nodes = test_nodes();
         let child_a = PortDiff::with_nodes([nodes[0], nodes[1]], &root_diff);
         let child_a = child_a
-            .rewrite(&[], vec![None; child_a.n_boundary_edges()])
+            .rewrite(&[], &vec![None; child_a.n_boundary_edges()])
             .unwrap();
         let merged = child_a.merge(&root_diff).unwrap();
         assert_eq!(merged.n_boundary_edges(), 0);
@@ -353,7 +353,7 @@ mod tests {
                         port: 3,
                     },
                 }],
-                vec![None; child_a.n_boundary_edges()],
+                &vec![None; child_a.n_boundary_edges()],
             )
             .unwrap();
         let merged = child_a.merge(&root_diff).unwrap();
@@ -389,7 +389,7 @@ mod tests {
                         },
                     },
                 ],
-                vec![None; child_a.n_boundary_edges()],
+                &vec![None; child_a.n_boundary_edges()],
             )
             .unwrap();
 

@@ -35,7 +35,6 @@ function usePortDiffState(updatePortDiff: boolean, sendUpdateHierarchy: () => vo
     const { graph, graphActions, editHandlers, viewHandlers } = useRFGraph(initGraph, initPositions, pushUpdatePortCounts);
 
     const onEdgeDoubleClick = useCallback((event: React.MouseEvent<MouseEvent>, edge: Edge) => {
-        console.log("onEdgeDoubleClick: ", edge);
         try {
             expandBoundary(edge.id);
         } catch (e) {

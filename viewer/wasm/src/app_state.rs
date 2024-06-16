@@ -4,64 +4,75 @@ use std::{
 };
 
 use itertools::Itertools;
-use portdiff::{BoundaryEdge, UniqueVertex};
-use uuid::Uuid;
+use portdiff::{BoundaryEdge, DetVertex, DetVertexCreator};
 
 use crate::{
-    examples,
+    examples::{self, gen_det_vertices},
     portdiff_serial::{Edge, Graph, Node},
-    Port, PortDiff, PortEdge, PortLabel,
+    Port, PortDiff, PortDiffId, PortDiffIdCreator, PortEdge, PortLabel,
 };
+
+type NodeId = String;
 
 pub(crate) struct AppState {
     current: PortDiff,
-    committed: HashMap<Uuid, PortDiff>,
-    vertex_origin: HashMap<Uuid, Uuid>,
-    current_boundary: Vec<Uuid>,
+    committed: HashMap<PortDiffId, PortDiff>,
+    /// Map from vertex ID to the port diff that created them
+    vertex_origin: HashMap<NodeId, PortDiffId>,
+    /// The ordered IDs of the current boundary
+    current_boundary: Vec<NodeId>,
+    /// Vertex creator
+    vertex_creator: DetVertexCreator,
+    /// PortDiffId creator
+    port_diff_id_creator: PortDiffIdCreator,
 }
 
 impl AppState {
-    fn new(init_diff: PortDiff) -> Self {
+    fn new(init_diff: PortDiff, vertex_creator: DetVertexCreator) -> Self {
         let all_port_diffs = HashMap::new();
         let vertex_origin = HashMap::new();
         let current_boundary = Vec::new();
+        let port_diff_id_creator = PortDiffIdCreator::default();
         Self {
             current: init_diff.clone(),
             committed: all_port_diffs,
             vertex_origin,
             current_boundary,
+            vertex_creator,
+            port_diff_id_creator,
         }
     }
 
-    pub(crate) fn commit(&mut self, port_diff: PortDiff) -> Uuid {
-        let id = Uuid::new_v4();
+    pub(crate) fn commit(&mut self, port_diff: PortDiff) -> PortDiffId {
+        let id = self.port_diff_id_creator.create();
         for v in port_diff.vertices() {
-            if !self.vertex_origin.contains_key(&v.id()) {
-                self.vertex_origin.insert(v.id(), id);
+            if !self.vertex_origin.contains_key(v.id()) {
+                self.vertex_origin.insert(v.id().to_string(), id.clone());
             }
         }
-        self.committed.insert(id, port_diff);
+        self.committed.insert(id.clone(), port_diff);
         id
     }
 
-    pub(crate) fn committed(&self) -> &HashMap<Uuid, PortDiff> {
+    pub(crate) fn committed(&self) -> &HashMap<PortDiffId, PortDiff> {
         &self.committed
     }
 
-    pub(crate) fn vertex_origin(&self) -> &HashMap<Uuid, Uuid> {
+    pub(crate) fn vertex_origin(&self) -> &HashMap<NodeId, PortDiffId> {
         &self.vertex_origin
     }
 
-    pub(crate) fn find_boundary_edge(&self, boundary_id: Uuid) -> Option<BoundaryEdge> {
+    pub(crate) fn find_boundary_edge(&self, boundary_id: &str) -> Option<BoundaryEdge> {
         self.current_boundary
             .iter()
-            .position(|&id| id == boundary_id)
+            .position(|id| id == boundary_id)
             .map(BoundaryEdge::from)
     }
 
     pub(crate) fn init() -> Self {
-        let init_diff = examples::port_diff();
-        let mut ret = Self::new(init_diff);
+        let mut vertex_creator = DetVertexCreator::new();
+        let init_diff = examples::port_diff(gen_det_vertices(&mut vertex_creator));
+        let mut ret = Self::new(init_diff, vertex_creator);
         ret.commit_current();
         ret
     }
@@ -70,12 +81,12 @@ impl AppState {
         &self.current
     }
 
-    pub(crate) fn commit_current(&mut self) -> Uuid {
+    pub(crate) fn commit_current(&mut self) -> PortDiffId {
         self.commit(self.current.clone())
     }
 
     pub(crate) fn set_current(&mut self, diff: PortDiff) {
-        self.current_boundary = repeat_with(Uuid::new_v4)
+        self.current_boundary = repeat_with(|| self.vertex_creator.create().0)
             .take(diff.n_boundary_edges())
             .collect_vec();
         self.current = diff;
@@ -101,12 +112,12 @@ impl AppState {
                 let right_id = edge.right.node.id();
                 [left_id, right_id].into_iter().map(|id| {
                     if internal_vertices.contains(&id) {
-                        let Some(&origin) = self.vertex_origin.get(&id) else {
+                        let Some(origin) = self.vertex_origin.get(id) else {
                             return Err(format!("Unknown vertex: {}", id));
                         };
-                        return Ok(Node::new_internal(id, origin));
+                        return Ok(Node::new_internal(id.to_string(), origin.clone()));
                     } else {
-                        return Ok(Node::new_external(id));
+                        return Ok(Node::new_external(id.to_string()));
                     }
                 })
             })
@@ -117,7 +128,7 @@ impl AppState {
         let boundary_nodes = self
             .current_boundary
             .iter()
-            .map(|&id| Node::new_boundary(id))
+            .map(|id| Node::new_boundary(id.to_string()))
             .collect_vec();
         let mut boundary_edges_map: BTreeMap<usize, Vec<&Node>> = BTreeMap::new();
         for (&ind, boundary) in boundary_edges_ind.iter().zip(boundary_nodes.iter()) {
@@ -179,17 +190,17 @@ impl AppState {
             self.current_boundary
                 .iter()
                 .enumerate()
-                .map(|(i, &id)| (id, i)),
+                .map(|(i, id)| (id, i)),
         );
         for edge in &edges {
             if let Some(&j) = curr_boundaries.get(&edge.source) {
                 boundary[j] = Some(Port {
-                    node: UniqueVertex::from_id(edge.target),
+                    node: DetVertex(edge.target.clone()),
                     port: PortLabel::In(edge.target_handle),
                 });
             } else if let Some(&j) = curr_boundaries.get(&edge.target) {
                 boundary[j] = Some(Port {
-                    node: UniqueVertex::from_id(edge.source),
+                    node: DetVertex(edge.source.clone()),
                     port: PortLabel::Out(edge.source_handle),
                 });
             } else {
@@ -197,6 +208,15 @@ impl AppState {
             }
         }
         (port_edges, boundary)
+    }
+
+    pub(crate) fn rewrite(
+        &mut self,
+        edges: &[PortEdge],
+        boundary: &[Option<Port>],
+    ) -> Result<PortDiff, String> {
+        self.current
+            .rewrite(&edges, boundary, &mut self.vertex_creator)
     }
 }
 
@@ -214,8 +234,14 @@ fn get_boundary_edges(edges: &[PortEdge], port_diff: &PortDiff) -> Result<Vec<us
             .enumerate()
             .filter(|(_, e)| &e.left == port || &e.right == port)
             .filter(|(_, e)| !internal_edges.contains(e))
-            .exactly_one()
-            .map_err(|_| "ambiguous boundary".to_string())?;
+            .next()
+            .ok_or(format!(
+                "no matching port, port: {:?}\nn_boundaries: {}",
+                port,
+                port_diff.n_boundary_edges()
+            ))?;
+        // .exactly_one()
+        // .map_err(|_| "ambiguous boundary".to_string())?;
         ret.push(index);
     }
     Ok(ret)
