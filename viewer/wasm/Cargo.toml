@@ -17,3 +17,6 @@ serde_json = "1.0.117"
 itertools = "0.13.0"
 getrandom = { version = "0.2.15", features = ["js"] }
 uuid = { version = "1.8.0", features = ["v4"] }
+
+[dev-dependencies]
+serial_test = "3.1.1"

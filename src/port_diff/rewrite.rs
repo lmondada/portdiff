@@ -131,9 +131,15 @@ mod tests {
     #[rstest]
     fn test_rewrite(root_diff: TestPortDiff) {
         let nodes = test_nodes();
-        let child = PortDiff::with_nodes([nodes[0], nodes[1]], &root_diff);
+        let mut vertex_creator = DetVertexCreator { max_ind: 4 };
+
+        let child = PortDiff::with_nodes([nodes[0].clone(), nodes[1].clone()], &root_diff);
         let grandchild = child
-            .rewrite(&[], &vec![None; child.n_boundary_edges()])
+            .rewrite(
+                &[],
+                &vec![None; child.n_boundary_edges()],
+                &mut vertex_creator,
+            )
             .unwrap();
         assert_eq!(grandchild.n_internal_edges(), 0);
         assert_eq!(grandchild.n_boundary_edges(), 1);

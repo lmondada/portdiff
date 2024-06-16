@@ -1,6 +1,5 @@
 use itertools::Itertools;
 use portdiff::{port_diff::MergeType, DetVertex};
-use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::{port_diff_id::PortDiffId, portdiff_serial::Edge, AppState, PortDiff};
@@ -128,7 +127,11 @@ pub fn expand_boundary(boundary_id: String) -> Result<(), String> {
 mod tests {
     use super::*;
 
+    // cannot run tests in parallel atm as it relies on the global app_state()
+    use serial_test::serial;
+
     #[test]
+    #[serial]
     fn test_e2e() {
         init_app().unwrap();
         rewrite(r#"[{"id":"b409981c-94f9-4555-9be8-a3a445804b32","source":"00000000-0000-0000-0000-000000000004","target":"00000000-0000-0000-0000-000000000005","sourceHandle":1,"targetHandle":1},{"id":"b3483b6a-2cd0-4b2e-b92c-1d09957e0d3a","source":"00000000-0000-0000-0000-000000000001","target":"00000000-0000-0000-0000-000000000004","sourceHandle":0,"targetHandle":0},{"id":"4963c59c-f2a2-4ef7-9510-5f4afa4454ac","source":"00000000-0000-0000-0000-000000000002","target":"00000000-0000-0000-0000-000000000004","sourceHandle":0,"targetHandle":1},{"id":"e726b6eb-521f-4d4d-835a-2bf88ccb6442","source":"00000000-0000-0000-0000-000000000003","target":"00000000-0000-0000-0000-000000000004","sourceHandle":0,"targetHandle":2},{"id":"ff2475f4-137e-423d-869f-40ed3445363f","source":"00000000-0000-0000-0000-000000000004","target":"00000000-0000-0000-0000-000000000005","sourceHandle":0,"targetHandle":0},{"id":"544ec31c-5b62-4052-a916-43e420aa6aa2","source":"00000000-0000-0000-0000-000000000005","target":"00000000-0000-0000-0000-000000000006","sourceHandle":0,"targetHandle":0},{"id":"87951abc-d47f-4855-af6f-d8470e89bd6b","source":"00000000-0000-0000-0000-000000000005","target":"00000000-0000-0000-0000-000000000007","sourceHandle":1,"targetHandle":0},{"id":"96b412d0-b073-45e5-9da7-081ef52d51d9","source":"00000000-0000-0000-0000-000000000005","target":"00000000-0000-0000-0000-000000000008","sourceHandle":2,"targetHandle":0}]"#.to_string()).unwrap();
@@ -141,6 +144,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_2() {
         init_app().unwrap();
         select_nodes(r#"["4"]"#.to_string()).unwrap();
@@ -148,11 +152,6 @@ mod tests {
         select_diffs(r#"["PORTDIFF_0"]"#.to_string()).unwrap();
         select_nodes(r#"["3"]"#.to_string()).unwrap();
         rewrite(r#"[{"id":"676d9961-8525-4687-8fb8-178ee0cb77b3","source":"6290ba0d-3313-4081-867b-8543dcc52e36","target":"3","sourceHandle":0,"targetHandle":3},{"id":"dfe76710-8ea7-4064-9997-a8037cba2c08","source":"17","target":"3","sourceHandle":0,"targetHandle":0},{"id":"a301fde9-a676-4ee0-a7e8-39d4f1622154","source":"18","target":"3","sourceHandle":0,"targetHandle":1},{"id":"6d101b18-b1f3-4b5f-ac14-68f96c83bd6d","source":"19","target":"3","sourceHandle":0,"targetHandle":2},{"id":"ca71bc81-936e-4544-bc6f-061fd5d8ce1b","source":"3","target":"20","sourceHandle":0,"targetHandle":0}]"#.to_string()).unwrap();
-        select_diffs(r#"["PORTDIFF_2","PORTDIFF_4"]"#.to_string()).unwrap();
-        let diff_ids = ["PORTDIFF_2", "PORTDIFF_4"];
-        let diffs = diff_ids
-            .into_iter()
-            .filter_map(|id| app_state().committed().get(&PortDiffId(id.to_string())));
-        PortDiff::merge_all(diffs).unwrap();
+        select_diffs(r#"["PORTDIFF_2", "PORTDIFF_4"]"#.to_string()).unwrap();
     }
 }

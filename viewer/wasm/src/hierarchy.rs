@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use uuid::Uuid;
-
 use crate::{port_diff_id::PortDiffId, AppState, PortDiff};
 
 impl AppState {

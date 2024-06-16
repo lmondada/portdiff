@@ -7,10 +7,6 @@ pub(crate) struct PortDiffIdCreator {
 }
 
 impl PortDiffIdCreator {
-    pub fn new() -> Self {
-        PortDiffIdCreator { max_ind: 0 }
-    }
-
     pub fn create(&mut self) -> PortDiffId {
         let id = format!("PORTDIFF_{}", self.max_ind);
         self.max_ind += 1;

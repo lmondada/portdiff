@@ -320,28 +320,27 @@ impl<V, P> PortDiff<V, P> {
 #[cfg(test)]
 mod tests {
     use rstest::{fixture, rstest};
-    use uuid::Uuid;
 
-    use crate::UniqueVertex;
+    use crate::{DetVertex, DetVertexCreator};
 
     use super::*;
 
-    pub(crate) type TestPortDiff = PortDiff<UniqueVertex, i32>;
+    pub(crate) type TestPortDiff = PortDiff<DetVertex, i32>;
 
-    pub(crate) fn test_nodes() -> [UniqueVertex; 4] {
+    pub(crate) fn test_nodes() -> [DetVertex; 4] {
         [
-            UniqueVertex::from_id(Uuid::from_u128(0)),
-            UniqueVertex::from_id(Uuid::from_u128(1)),
-            UniqueVertex::from_id(Uuid::from_u128(2)),
-            UniqueVertex::from_id(Uuid::from_u128(3)),
+            DetVertex("0".to_string()),
+            DetVertex("1".to_string()),
+            DetVertex("2".to_string()),
+            DetVertex("3".to_string()),
         ]
     }
 
     #[fixture]
     pub(crate) fn root_diff() -> TestPortDiff {
-        let nodes = test_nodes();
-        let new_port = |n, i| Port {
-            node: nodes[n],
+        let nodes: [DetVertex; 4] = test_nodes();
+        let new_port = |n: usize, i| Port {
+            node: nodes[n].clone(),
             port: i,
         };
         let ports_0 = (0..3).map(|i| new_port(0, i)).collect_vec();
@@ -376,62 +375,55 @@ mod tests {
         PortDiff::with_no_boundary(edges)
     }
 
-    // #[rstest]
-    // fn test_port_diff(root_diff: TestPortDiff) {
-    //     let nodes = test_nodes();
-    //     let just_1 = PortDiff::with_root(nodes[1], &root_diff);
-    //     assert_eq!(just_1.n_boundary_edges(), 4);
-    //     assert_eq!(just_1.n_internal_edges(), 0);
-    //     let child_1_2 = {
-    //         let edge = just_1.find_boundary_edge(&nodes[1], &3).unwrap();
-    //         let expansion_opts = just_1.expand(edge).collect_vec();
-    //         assert_eq!(expansion_opts.len(), 1);
-    //         expansion_opts.into_iter().next().unwrap()
-    //     };
-    //     assert_eq!(child_1_2.n_boundary_edges(), 3 + 3);
-    //     assert_eq!(child_1_2.n_internal_edges(), 1);
-
-    //     // Check boundary
-    //     let boundary = BTreeSet::from_iter(child_1_2.data.boundary_ports.clone());
-    //     let exp_boundary = BTreeSet::from_iter(
-    //         (0..3)
-    //             .map(|i| Port {
-    //                 node: nodes[1],
-    //                 port: i,
-    //             })
-    //             .chain((0..3).map(|i| Port {
-    //                 node: nodes[2],
-    //                 port: i,
-    //             })),
-    //     );
-    //     assert_eq!(boundary, exp_boundary);
-
-    //     // Check internal edges
-    //     assert_eq!(
-    //         child_1_2.data.edges,
-    //         [PortEdge {
-    //             left: Port {
-    //                 node: nodes[1],
-    //                 port: 3
-    //             },
-    //             right: Port {
-    //                 node: nodes[2],
-    //                 port: 3
-    //             },
-    //         }]
-    //     );
-    // }
-
     #[rstest]
     fn test_with_nodes(root_diff: TestPortDiff) {
         let nodes = test_nodes();
-        let child_a = PortDiff::with_nodes([nodes[0], nodes[1]], &root_diff);
+        let child_a = PortDiff::with_nodes([nodes[0].clone(), nodes[1].clone()], &root_diff);
         assert_eq!(child_a.n_boundary_edges(), 1);
         assert_eq!(child_a.n_internal_edges(), 3);
         assert!(!root_diff.data.boundary_desc.borrow()[3].left.is_empty());
         assert!(root_diff.data.boundary_desc.borrow()[3].right.is_empty());
 
-        let _ = PortDiff::with_nodes([nodes[2], nodes[3]], &root_diff);
+        let _ = PortDiff::with_nodes([nodes[2].clone(), nodes[3].clone()], &root_diff);
         assert!(!root_diff.data.boundary_desc.borrow()[3].right.is_empty());
+    }
+
+    #[rstest]
+    fn test_merge_neighbours_ancestor(root_diff: TestPortDiff) {
+        let mut vertex_creator = DetVertexCreator { max_ind: 4 };
+        let mut rewrite = |child: &PortDiff<DetVertex, _>| {
+            let v = child.vertices().next().unwrap();
+            child.rewrite(
+                &[PortEdge {
+                    left: Port {
+                        node: v.clone(),
+                        port: 4,
+                    },
+                    right: Port {
+                        node: vertex_creator.create(),
+                        port: 0,
+                    },
+                }],
+                &vec![None; child.n_boundary_edges()],
+                &mut vertex_creator,
+            )
+        };
+        let child_a = PortDiff::with_nodes([DetVertex("1".to_string())], &root_diff);
+        let child_a = rewrite(&child_a).unwrap();
+
+        let child_b = PortDiff::with_nodes([DetVertex("2".to_string())], &root_diff);
+        let child_b = rewrite(&child_b).unwrap();
+
+        let diff = PortDiff::merge_all(&[child_a, child_b]).unwrap();
+        assert_eq!(diff.vertices().count(), 4);
+
+        let merged = diff.merge(&root_diff).unwrap();
+        assert_eq!(merged.vertices().count(), 6);
+        assert_eq!(merged.n_boundary_edges(), 0);
+        dbg!(merged
+            .internal_edges()
+            .map(|e| merged.internal_edge(&e))
+            .collect_vec());
+        assert_eq!(merged.n_internal_edges(), 3 + 3 + 1 + 2);
     }
 }
