@@ -145,10 +145,19 @@ impl AppState {
             .flat_map(|(index, boundary_nodes)| {
                 assert!(!boundary_nodes.is_empty());
                 let mut new_edges = Vec::new();
+                let left_internal = nodes
+                    .iter()
+                    .filter(|n| matches!(n, Node::Internal(_)))
+                    .find(|n| n.id() == edges[index].left.node.id())
+                    .is_some();
                 new_edges.push(Edge::from_boundary(
                     &edges[index].left,
                     boundary_nodes.first().unwrap(),
-                    None,
+                    if left_internal {
+                        None
+                    } else {
+                        Some("dashed".to_string())
+                    },
                 ));
                 for (bd1, bd2) in boundary_nodes.iter().tuple_windows() {
                     if matches!(&edges[index].left.port, PortLabel::Out(_)) {
@@ -160,7 +169,7 @@ impl AppState {
                 new_edges.push(Edge::from_boundary(
                     &edges[index].right,
                     boundary_nodes.last().unwrap(),
-                    if boundary_nodes.len() < 2 {
+                    if boundary_nodes.len() < 2 && left_internal {
                         Some("dashed".to_string())
                     } else {
                         None

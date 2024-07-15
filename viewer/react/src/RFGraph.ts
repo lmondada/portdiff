@@ -287,7 +287,7 @@ function useOnDoubleClick(appendNode: (node: PlacedWasmNode) => void) {
                         port_diff_id: "new",
                         n_inputs: 0,
                         n_outputs: 0,
-                        label: "yolo",
+                        label: "Pending ID",
                         color: undefined,
                     },
                     type: "Internal" as const,
