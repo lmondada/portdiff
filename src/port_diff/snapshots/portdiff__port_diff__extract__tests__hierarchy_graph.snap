@@ -1,0 +1,11 @@
+---
+source: src/port_diff/extract.rs
+expression: "Dot::with_config(&graph, &[Config::NodeNoLabel, Config::EdgeNoLabel])"
+---
+digraph {
+    0 [ ]
+    1 [ ]
+    2 [ ]
+    0 -> 1 [ ]
+    1 -> 2 [ ]
+}
