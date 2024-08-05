@@ -1,8 +1,7 @@
-use std::cmp;
+use std::collections::BTreeMap;
 
 use crate::{
-    graph::GraphBuilder,
-    port::{BoundPort, PortSide, UnboundPort},
+    port::{BoundPort, EdgeEnd, Site},
     Graph, PortDiff,
 };
 
@@ -51,80 +50,143 @@ impl Graph for pg::PortGraph {
             })
     }
 
-    fn to_unbound(
+    fn get_port_site(
         &self,
-        BoundPort { edge, port }: BoundPort<Self::Edge>,
-    ) -> UnboundPort<Self::Node, Self::PortLabel> {
+        BoundPort { edge, end }: BoundPort<Self::Edge>,
+    ) -> Site<Self::Node, Self::PortLabel> {
         let left = self.output(edge.node, edge.outgoing as usize).unwrap();
         let (left, right) = self.port_links(left).exactly_one().unwrap();
-        let port_index = match port {
-            PortSide::Left => left,
-            PortSide::Right => right,
+        let port_index = match end {
+            EdgeEnd::Left => left,
+            EdgeEnd::Right => right,
         };
-        UnboundPort {
+        Site {
             node: self.port_node(port_index).unwrap(),
             port: self.port_offset(port_index).unwrap(),
         }
     }
-}
 
-impl GraphBuilder<PortGraph> for PortGraph {
-    type NodeId = pg::NodeIndex;
-
-    fn new() -> Self {
-        PortGraph::new()
+    fn get_bound_ports(
+        &self,
+        unbound_port: Site<Self::Node, Self::PortLabel>,
+    ) -> impl Iterator<Item = BoundPort<Self::Edge>> + '_ {
+        let port_index = self.port_index(unbound_port.node, unbound_port.port);
+        port_index.into_iter().flat_map(|port| {
+            self.port_links(port).map(|(src, tgt)| {
+                match self.port_offset(src).unwrap().direction() {
+                    pg::Direction::Incoming => {
+                        let edge = PortgraphEdge::try_from((
+                            self.port_node(tgt).unwrap(),
+                            self.port_offset(tgt).unwrap(),
+                        ))
+                        .unwrap();
+                        let end = EdgeEnd::Right;
+                        BoundPort { edge, end }
+                    }
+                    pg::Direction::Outgoing => {
+                        let edge = PortgraphEdge::try_from((
+                            self.port_node(src).unwrap(),
+                            self.port_offset(src).unwrap(),
+                        ))
+                        .unwrap();
+                        let end = EdgeEnd::Left;
+                        BoundPort { edge, end }
+                    }
+                }
+            })
+        })
     }
 
-    fn add_edge(
+    fn get_sites(
+        &self,
+        node: Self::Node,
+    ) -> impl Iterator<Item = Site<Self::Node, Self::PortLabel>> + '_ {
+        self.all_port_offsets(node)
+            .map(move |port| Site { node, port })
+    }
+
+    fn link_sites(
         &mut self,
-        left: UnboundPort<Self::NodeId, <PortGraph as Graph>::PortLabel>,
-        right: UnboundPort<Self::NodeId, <PortGraph as Graph>::PortLabel>,
-    ) {
-        resize_ports(self, &left, &right);
-        self.link_offsets(left.node, left.port, right.node, right.port)
+        left: Site<Self::Node, Self::PortLabel>,
+        right: Site<Self::Node, Self::PortLabel>,
+    ) -> (BoundPort<Self::Edge>, BoundPort<Self::Edge>) {
+        let (outport, _) = self
+            .link_offsets(left.node, left.port, right.node, right.port)
             .unwrap();
-        // if let Err(err) = edge_add_success {
-        //     // check that the edge that exist is identical
-        //     let out_port = self.output(left_node, out as usize).unwrap();
-        //     let (_, in_port) = self.port_links(out_port).exactly_one().unwrap();
-        //     if right_node != self.port_node(in_port).unwrap()
-        //         || pg::PortOffset::Incoming(inc) != self.port_offset(in_port).unwrap()
-        //     {
-        //         panic!("Different edge already exists: {err:?}")
-        //     }
-        // }
+        let edge = (
+            self.port_node(outport).unwrap(),
+            self.port_offset(outport).unwrap(),
+        )
+            .try_into()
+            .unwrap();
+        (
+            BoundPort {
+                edge,
+                end: EdgeEnd::Left,
+            },
+            BoundPort {
+                edge,
+                end: EdgeEnd::Right,
+            },
+        )
     }
 
-    fn add_node(&mut self, n: <PortGraph as Graph>::Node) -> Self::NodeId {
-        PortMut::add_node(self, 0, 0)
+    fn add_subgraph(
+        &mut self,
+        graph: &Self,
+        nodes: &std::collections::BTreeSet<Self::Node>,
+    ) -> std::collections::BTreeMap<Self::Node, Self::Node> {
+        let mut nodes_map = BTreeMap::new();
+        for node in nodes {
+            let new_node = self.add_node(0, 0);
+            nodes_map.insert(*node, new_node);
+        }
+
+        // Add every port in `graph` to `self`
+        for port in graph.ports_iter() {
+            let src = graph.port_node(port).unwrap();
+            let src_offset = graph.port_offset(port).unwrap();
+            resize_ports(
+                self,
+                &Site {
+                    node: src,
+                    port: src_offset,
+                },
+            );
+            // Add all outgoing edges in `port`.
+            if graph.port_direction(port).unwrap() == pg::Direction::Outgoing {
+                for (_, tgt) in graph.port_links(port) {
+                    let tgt_offset = graph.port_offset(tgt).unwrap();
+                    let tgt = graph.port_node(tgt).unwrap();
+                    resize_ports(
+                        self,
+                        &Site {
+                            node: tgt,
+                            port: tgt_offset,
+                        },
+                    );
+                    self.link_offsets(nodes_map[&src], src_offset, nodes_map[&tgt], tgt_offset)
+                        .unwrap();
+                }
+            }
+        }
+        nodes_map
     }
 }
 
-fn resize_ports(
-    graph: &mut PortGraph,
-    left: &UnboundPort<pg::NodeIndex, pg::PortOffset>,
-    right: &UnboundPort<pg::NodeIndex, pg::PortOffset>,
-) {
-    let &UnboundPort {
-        node,
-        port: pg::PortOffset::Outgoing(out),
-    } = left
-    else {
-        panic!("Edge lhs must be outgoing port")
-    };
-    if graph.outputs(node).count() <= out as usize {
-        graph.set_num_ports(node, graph.num_inputs(node), (out + 1) as usize, |_, _| {})
-    }
+fn resize_ports(graph: &mut PortGraph, site: &Site<pg::NodeIndex, pg::PortOffset>) {
+    let node = site.node;
+    let offset = site.port.index();
+    let dir = site.port.direction();
 
-    let &UnboundPort {
-        node,
-        port: pg::PortOffset::Incoming(inc),
-    } = right
-    else {
-        panic!("Edge rhs must be incoming port")
-    };
-    if graph.inputs(node).count() <= inc as usize {
-        graph.set_num_ports(node, (inc + 1) as usize, graph.num_outputs(node), |_, _| {})
+    if graph.num_ports(node, dir) <= offset as usize {
+        let mut in_ports = graph.num_inputs(node);
+        let mut out_ports = graph.num_outputs(node);
+        match dir {
+            pg::Direction::Incoming => in_ports = offset + 1,
+            pg::Direction::Outgoing => out_ports = offset + 1,
+        }
+        graph.set_num_ports(node, in_ports, out_ports, |_, _| {});
     }
 }
 

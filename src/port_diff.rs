@@ -1,55 +1,49 @@
 mod extract;
 mod rewrite;
+mod squash;
+// mod traverser;
 
 use std::{
-    cell::{Ref, RefCell},
     cmp,
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeSet,
     fmt::{self, Debug},
     hash::Hash,
     ops::Deref,
-    rc::{Rc, Weak},
 };
 
 use crate::{
     graph::Graph,
-    port::{BoundPort, ChildPort, ParentPort, Port},
+    port::{BoundPort, BoundaryIndex, Port},
+    subgraph::Subgraph,
 };
+use bimap::BiBTreeMap;
+use derive_more::{From, Into};
 use itertools::Itertools;
+use relrc::RelRc;
 
-use crate::port::UnboundPort;
+use crate::port::Site;
 
+// pub use traverser::DiffTraverser;
+
+#[derive(From)]
 pub struct PortDiff<G: Graph> {
-    data: Rc<PortDiffData<G>>,
+    data: RelRc<PortDiffData<G>, EdgeData<G>>,
 }
 
-type PortDiffPtr<G> = *const PortDiffData<G>;
+pub type PortDiffPtr<G> = *const relrc::node::InnerData<PortDiffData<G>, EdgeData<G>>;
 
 impl<G: Graph> PortDiff<G> {
-    fn new(data: PortDiffData<G>) -> Self {
-        let ret = Self {
-            data: Rc::new(data),
-        };
-        // Record `ret` as a descendant at the ancestors
-        ret.register_child();
-        ret
+    fn new(
+        data: PortDiffData<G>,
+        parents: impl IntoIterator<Item = (PortDiff<G>, EdgeData<G>)>,
+    ) -> Self {
+        Self {
+            data: RelRc::with_parents(data, parents.into_iter().map(|(p, e)| (p.data, e))),
+        }
     }
 
     pub(crate) fn as_ptr(&self) -> PortDiffPtr<G> {
-        Rc::as_ptr(&self.data)
-    }
-
-    /// Add a weak ref to `self` at all its parents
-    fn register_child(&self) {
-        for (child_port, ParentPort { parent, port }) in &self.boundary {
-            parent.add_child(
-                *port,
-                ChildPort {
-                    child: self.downgrade(),
-                    port: child_port.clone(),
-                },
-            );
-        }
+        RelRc::as_ptr(&self.data)
     }
 }
 
@@ -61,9 +55,15 @@ impl<G: Graph> Clone for PortDiff<G> {
     }
 }
 
+impl<G: Graph> Hash for PortDiff<G> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.as_ptr().hash(state);
+    }
+}
+
 impl<G: Graph> PartialEq for PortDiff<G> {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.data, &other.data)
+        RelRc::ptr_eq(&self.data, &other.data)
     }
 }
 
@@ -80,173 +80,163 @@ impl<G: Graph> Debug for PortDiff<G> {
     }
 }
 
-impl<G: Graph> PartialEq for WeakPortDiff<G> {
-    fn eq(&self, other: &Self) -> bool {
-        let Some(self_data) = self.data.upgrade() else {
-            return false;
-        };
-        let Some(other_data) = other.data.upgrade() else {
-            return false;
-        };
-        Rc::ptr_eq(&self_data, &other_data)
-    }
-}
-
-impl<G: Graph> Eq for WeakPortDiff<G> {}
-
-#[derive(Clone, Debug)]
-pub struct WeakPortDiff<G: Graph> {
-    data: Weak<PortDiffData<G>>,
-}
-
-impl<G: Graph> WeakPortDiff<G> {
-    fn new(data: Weak<PortDiffData<G>>) -> Self {
-        Self { data }
-    }
-
-    pub fn upgrade(&self) -> Option<PortDiff<G>> {
-        Some(PortDiff {
-            data: self.data.upgrade()?,
-        })
-    }
-
-    pub fn is_upgradable(&self) -> bool {
-        self.data.strong_count() > 0
-    }
-}
-
-/// Uniquely identify nodes in the rewrite history by their node and the graph
-/// they belong to.
-///
-/// TODO: this should be deterministic and identical across multiple processes,
-/// so replace the graph pointer with a hash of the rewrite history.
-pub struct UniqueNodeId<G: Graph> {
-    node: G::Node,
-    owner: PortDiff<G>,
-}
-
-#[derive(Debug)]
-pub enum PortDiffEdge<G: Graph> {
-    Internal {
-        owner: PortDiff<G>,
-        edge: G::Edge,
-    },
-    Boundary {
-        left_owner: PortDiff<G>,
-        left_port: UnboundPort<G::Node, G::PortLabel>,
-        right_owner: PortDiff<G>,
-        right_port: UnboundPort<G::Node, G::PortLabel>,
-    },
-}
-
-impl<G: Graph> Debug for UniqueNodeId<G>
-where
-    G::Node: Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "UniqueNodeId {{ node: {:?}, owner: {:?} }}",
-            self.node, self.owner
-        )
-    }
-}
-
-impl<G: Graph> PartialEq for UniqueNodeId<G> {
-    fn eq(&self, other: &Self) -> bool {
-        self.node == other.node && self.owner == other.owner
-    }
-}
-
-impl<G: Graph> Eq for UniqueNodeId<G> {}
-
-impl<G: Graph> PartialOrd for UniqueNodeId<G> {
+impl<G: Graph> PartialOrd for PortDiff<G> {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<G: Graph> Ord for UniqueNodeId<G> {
+
+impl<G: Graph> Ord for PortDiff<G> {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        let as_tuple = |o: &Self| (o.node, o.owner.as_ptr());
-        as_tuple(self).cmp(&as_tuple(other))
+        self.as_ptr().cmp(&other.as_ptr())
     }
 }
+pub struct PortDiffData<G: Graph> {
+    /// The internal graph
+    graph: G,
+    /// The boundary of the subgraph.
+    ///
+    /// Maps boundary ports of `graph` to a port in one of the parents.
+    boundary: Vec<(Site<G::Node, G::PortLabel>, IncomingEdgeIndex)>,
+}
 
-impl<G: Graph> Clone for UniqueNodeId<G> {
+/// The incoming edge at a portdiff, given by its index.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, From, Into)]
+pub struct IncomingEdgeIndex(usize);
+
+pub struct EdgeData<G: Graph> {
+    /// The parent subgraph that is rewritten.
+    subgraph: Subgraph<G>,
+    /// Map ports in parent to boundary ports in child
+    ///
+    /// The domain of the map is the union of the boundary of `subgraph` and
+    /// the boundary ports of `parent` that are on `subgraph.nodes`.
+    port_map: BiBTreeMap<Port<G>, BoundaryIndex>,
+}
+
+impl<G: Graph> Clone for EdgeData<G> {
     fn clone(&self) -> Self {
         Self {
-            node: self.node.clone(),
-            owner: self.owner.clone(),
+            subgraph: self.subgraph.clone(),
+            port_map: self.port_map.clone(),
         }
     }
 }
 
-impl<G: Graph> UniqueNodeId<G> {
-    fn new(node: G::Node, graph: PortDiff<G>) -> Self {
-        Self { node, owner: graph }
+impl<G: Graph> EdgeData<G> {
+    fn map_to_child(&self, port: &Port<G>) -> Option<BoundaryIndex> {
+        self.port_map.get_by_left(&port).copied()
     }
-}
 
-type Boundary<G> =
-    BTreeMap<UnboundPort<<G as Graph>::Node, <G as Graph>::PortLabel>, ParentPort<G>>;
+    fn map_to_parent(&self, boundary: BoundaryIndex) -> Option<&Port<G>> {
+        self.port_map.get_by_right(&boundary)
+    }
 
-#[derive(Clone)]
-pub struct PortDiffData<G: Graph> {
-    /// The internal graph
-    graph: G,
-    /// The boundary is a map from unbound ports in `graph` to bound ports
-    /// in a parent graph.
-    ///
-    /// Currently every (node, port label) pair can have at most one boundary port.
-    boundary: Boundary<G>,
-    /// The reverse boundary map, i.e. map bound ports in `graph` to all
-    /// unbound ports in children `graphs`.
-    children: RefCell<BTreeMap<BoundPort<G::Edge>, Vec<ChildPort<G>>>>,
-    /// Nodes that have been deleted in the rewrite history
-    exclude_nodes: BTreeSet<UniqueNodeId<G>>,
+    pub(crate) fn are_compatible<'a>(edges: impl IntoIterator<Item = &'a Self>) -> bool
+    where
+        G: 'a,
+    {
+        // All vertex sets must be disjoint
+        let mut all_nodes = BTreeSet::new();
+        for edge in edges {
+            if !edge.subgraph.nodes().iter().all(|&v| all_nodes.insert(v)) {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 impl<G: Graph> Deref for PortDiff<G> {
     type Target = PortDiffData<G>;
 
     fn deref(&self) -> &Self::Target {
-        &self.data
+        self.data.value()
     }
 }
 
-impl<G: Graph> From<PortDiffData<G>> for PortDiff<G> {
-    fn from(data: PortDiffData<G>) -> Self {
-        Self::new(data)
-    }
-}
-
-impl<G: Graph> Hash for PortDiff<G> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.as_ptr().hash(state);
-    }
-}
+type InEdge<G> = relrc::edge::InnerEdgeData<PortDiffData<G>, EdgeData<G>>;
+type OutEdge<G> = relrc::edge::Edge<PortDiffData<G>, EdgeData<G>>;
 
 impl<G: Graph> PortDiff<G> {
     /// Create a diff with no boundary.
     ///
     /// This will be a "root" in the diff hierarchy, as it has no ancestors.
     pub fn from_graph(graph: G) -> Self {
-        Self::new(PortDiffData {
-            graph,
-            boundary: BTreeMap::new(),
-            children: RefCell::new(BTreeMap::new()),
-            exclude_nodes: BTreeSet::new(),
-        })
+        Self::new(
+            PortDiffData {
+                graph,
+                boundary: Vec::new(),
+            },
+            [],
+        )
     }
 
     pub fn graph(&self) -> &G {
-        &self.data.graph
+        &self.graph
     }
 
-    fn exclude_nodes<'a>(&'a self, parent: &'a PortDiff<G>) -> impl Iterator<Item = G::Node> + 'a {
-        self.exclude_nodes
-            .iter()
-            .filter_map(move |n| (&n.owner == parent).then_some(n.node))
+    /// The i-th incoming edge
+    fn incoming(&self, index: IncomingEdgeIndex) -> Option<&InEdge<G>> {
+        self.data.incoming(index.0)
+    }
+
+    fn incoming_edge_index(&self, boundary: BoundaryIndex) -> Option<IncomingEdgeIndex> {
+        self.boundary
+            .get(usize::from(boundary))
+            .map(|&(_, index)| index)
+    }
+
+    fn port_outgoing(&self, port: Port<G>) -> impl Iterator<Item = OutEdge<G>> + '_ {
+        self.all_outgoing()
+            .into_iter()
+            .filter(move |e| e.value().map_to_child(&port).is_some())
+    }
+
+    /// All incoming edges.
+    fn all_incoming(&self) -> &[InEdge<G>] {
+        self.data.all_incoming()
+    }
+
+    fn all_parents(&self) -> impl Iterator<Item = Self> + '_ {
+        self.data.all_parents().map(|p| p.clone().into()).unique()
+    }
+
+    /// All outgoing edges.
+    fn all_outgoing(&self) -> Vec<OutEdge<G>> {
+        self.data.all_outgoing()
+    }
+
+    /// Recursively follow parent ports until finding a bound port.
+    pub fn bound_ancestor(&self, mut boundary: BoundaryIndex) -> Owned<BoundPort<G::Edge>, G> {
+        let mut owner = self.clone();
+        loop {
+            match owner.parent_port(boundary) {
+                Owned {
+                    data: Port::Bound(port),
+                    owner,
+                } => {
+                    return Owned { data: port, owner };
+                }
+                Owned {
+                    data: Port::Boundary(index),
+                    owner: parent,
+                } => {
+                    boundary = index;
+                    owner = parent;
+                }
+            }
+        }
+    }
+
+    /// The parent port of a boundary port.
+    pub fn parent_port(&self, boundary: BoundaryIndex) -> Owned<Port<G>, G> {
+        let edge_index = self.incoming_edge_index(boundary).unwrap();
+        let edge = self.incoming(edge_index).unwrap();
+        let port = edge.value().map_to_parent(boundary).unwrap().clone();
+        let owner = edge.source().clone().into();
+        Owned { data: port, owner }
     }
 
     /// Traverse a boundary edge and list all possible opposite edge ends
@@ -254,24 +244,27 @@ impl<G: Graph> PortDiff<G> {
     /// There is no guarantee that the opposite end does not clash with `self`.
     ///
     /// TODO: return them in toposort order
-    fn find_opposite_end(
-        &self,
-        boundary: &UnboundPort<G::Node, G::PortLabel>,
-    ) -> impl Iterator<Item = Port<G>> {
-        let parent_port = self.parent_port(boundary);
-        // The other end can be at the parent...
-        let parent_opposite: Port<_> = parent_port.opposite().into();
-        // Or any of its descendants
-        let children = parent_port
-            .children()
-            .into_iter()
-            .filter_map(|child| child.upgrade())
-            .collect_vec();
-        Some(parent_opposite).into_iter().chain(children)
+    pub fn opposite_ports<'a>(&self, port: Port<G>) -> Vec<Owned<Port<G>, G>>
+    where
+        G: 'a,
+    {
+        // Find the first parent port that is an ancestor of `port`.
+        let parent_port = match port {
+            Port::Boundary(boundary) => self.bound_ancestor(boundary),
+            Port::Bound(port) => {
+                let owner = self.clone();
+                Owned { data: port, owner }
+            }
+        };
+        parent_port.owner.descendants(parent_port.data.opposite())
     }
 
-    fn parent_port(&self, boundary: &UnboundPort<G::Node, G::PortLabel>) -> &ParentPort<G> {
-        &self.boundary[&boundary]
+    fn boundary_iter(&self) -> impl Iterator<Item = BoundaryIndex> {
+        (0..self.boundary.len()).map_into()
+    }
+
+    pub fn boundary_site(&self, boundary: BoundaryIndex) -> &Site<G::Node, G::PortLabel> {
+        &self.boundary[usize::from(boundary)].0
     }
 
     pub fn is_compatible(&self, other: &Self) -> bool {
@@ -282,40 +275,37 @@ impl<G: Graph> PortDiff<G> {
         self.boundary.len()
     }
 
-    fn retain_upgradable_children(&self, port: BoundPort<G::Edge>) {
-        let mut children = self.data.children.borrow_mut();
-        let port_children = children.get_mut(&port);
-        if let Some(port_children) = port_children {
-            port_children.retain(|child| child.is_upgradable());
+    /// All the ports of descendants of `self` that map to `port`.
+    pub fn descendants(&self, port: BoundPort<G::Edge>) -> Vec<Owned<Port<G>, G>> {
+        let mut curr_ports = vec![Owned {
+            data: Port::from(port),
+            owner: self.clone(),
+        }];
+        let mut all_ports = curr_ports.clone();
+        while let Some(port) = curr_ports.pop() {
+            all_ports.push(port.clone());
+            curr_ports.extend(port.owner.all_outgoing().iter().filter_map(|e| {
+                let port = e.value().map_to_child(&port.data)?;
+                let owner = e.target().clone().into();
+                Some(Owned {
+                    data: Port::from(port),
+                    owner,
+                })
+            }));
         }
+        all_ports
     }
 
-    pub(crate) fn children(&self, port: BoundPort<G::Edge>) -> Ref<[ChildPort<G>]> {
-        // Before returning the list, take the opportunity to remove any old
-        // weak refs
-        self.retain_upgradable_children(port);
-
-        self.children.borrow_mut().entry(port).or_default();
-
-        Ref::map(self.children.borrow(), |children| {
-            children[&port].as_slice()
-        })
+    pub fn all_children(&self) -> impl Iterator<Item = PortDiff<G>> + '_ {
+        self.data.all_children().map(|p| p.into())
     }
 
-    pub(crate) fn all_children(&self) -> Vec<PortDiff<G>> {
-        self.children
-            .borrow()
-            .values()
-            .flat_map(|children| children.iter().flat_map(|c| c.child.upgrade()))
-            .collect_vec()
-    }
-
-    pub(crate) fn parents(&self) -> impl Iterator<Item = &PortDiff<G>> {
-        self.boundary.values().map(|p| &p.parent).unique()
+    pub fn port_children(&self, port: Port<G>) -> impl Iterator<Item = PortDiff<G>> + '_ {
+        self.port_outgoing(port).map(|e| e.target().clone().into())
     }
 
     pub fn has_any_descendants(&self) -> bool {
-        self.children.borrow().values().any(|r| !r.is_empty())
+        self.data.n_outgoing() > 0
     }
 
     // #[cfg(test)]
@@ -329,27 +319,88 @@ impl<G: Graph> PortDiff<G> {
     //         n == node && p == port
     //     })
     // }
+}
 
-    fn add_child(&self, port: BoundPort<G::Edge>, child_port: ChildPort<G>) {
-        self.children
-            .borrow_mut()
-            .entry(port)
-            .or_default()
-            .push(child_port);
+/// A piece of data along with its owning portdiff.
+///
+/// This is useful for ports, node indices etc.
+pub struct Owned<D, G: Graph> {
+    pub data: D,
+    pub owner: PortDiff<G>,
+}
+
+impl<D, G: Graph> Owned<D, G> {
+    pub fn new(data: D, owner: PortDiff<G>) -> Self {
+        Self { data, owner }
+    }
+}
+
+impl<G: Graph> Owned<BoundPort<G::Edge>, G> {
+    fn opposite(&self) -> Self {
+        Self {
+            data: self.data.opposite(),
+            owner: self.owner.clone(),
+        }
     }
 
-    pub(crate) fn downgrade(&self) -> WeakPortDiff<G> {
-        WeakPortDiff::new(Rc::downgrade(&self.data))
+    fn site(&self) -> Owned<Site<G::Node, G::PortLabel>, G> {
+        Owned {
+            data: self.owner.graph.get_port_site(self.data),
+            owner: self.owner.clone(),
+        }
+    }
+}
+
+impl<D: Clone, G: Graph> Clone for Owned<D, G> {
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            owner: self.owner.clone(),
+        }
+    }
+}
+
+impl<D: PartialEq, G: Graph> PartialEq for Owned<D, G> {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data && self.owner == other.owner
+    }
+}
+
+impl<D: Eq, G: Graph> Eq for Owned<D, G> {}
+
+impl<D: PartialOrd, G: Graph> PartialOrd for Owned<D, G> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self.data.partial_cmp(&other.data) {
+            Some(core::cmp::Ordering::Equal) => self.owner.partial_cmp(&other.owner),
+            ord => ord,
+        }
+    }
+}
+
+impl<D: Ord, G: Graph> Ord for Owned<D, G> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.data
+            .cmp(&other.data)
+            .then_with(|| self.owner.cmp(&other.owner))
+    }
+}
+
+impl<D: Hash, G: Graph> Hash for Owned<D, G> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.data.hash(state);
+        self.owner.hash(state);
     }
 }
 
 #[cfg(feature = "portgraph")]
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeSet;
+
     use portgraph::{LinkMut, NodeIndex, PortGraph, PortMut, PortOffset};
     use rstest::{fixture, rstest};
 
-    use crate::port::PortSide;
+    use crate::port::EdgeEnd;
 
     use super::*;
 
@@ -362,7 +413,8 @@ mod tests {
         ) -> TestPortDiff {
             let graph = self.graph.clone();
             let nodes = nodes.into_iter().collect();
-            self.rewrite_induced(&nodes, graph, |n| n).unwrap()
+            self.rewrite_induced(&nodes, graph, |p| Owned::new(p, self.clone()).site())
+                .unwrap()
         }
     }
 
@@ -390,28 +442,29 @@ mod tests {
         rhs.add_node(3, 0);
         rhs.add_node(0, 3);
         let child_nodes = BTreeSet::from_iter([n1, n2]);
-        let child_a = root_diff.rewrite_induced(&child_nodes, rhs, |n| n).unwrap();
+        let child_a = root_diff
+            .rewrite_induced(&child_nodes, rhs, |p| {
+                Owned::new(p, root_diff.clone()).site()
+            })
+            .unwrap();
         assert_eq!(child_a.n_boundary_ports(), 6);
 
-        for (node, port_side) in [(n0, PortSide::Right), (n2, PortSide::Left)] {
+        for (node, port_side) in [(n0, EdgeEnd::Right), (n2, EdgeEnd::Left)] {
             for offset in 0..3 {
-                let port = BoundPort {
+                let port = Port::from(BoundPort {
                     edge: (node, PortOffset::Outgoing(offset)).try_into().unwrap(),
-                    port: port_side,
-                };
-                assert_eq!(
-                    root_diff.children(port)[0].child.upgrade().unwrap(),
-                    child_a
-                );
+                    end: port_side,
+                });
+                assert_eq!(root_diff.port_children(port).next().unwrap(), child_a);
             }
         }
 
-        for port_side in [PortSide::Left, PortSide::Right] {
-            let port = BoundPort {
+        for port_side in [EdgeEnd::Left, EdgeEnd::Right] {
+            let port = Port::from(BoundPort {
                 edge: (n1, PortOffset::Outgoing(0)).try_into().unwrap(),
-                port: port_side,
-            };
-            assert!(root_diff.children(port).is_empty());
+                end: port_side,
+            });
+            assert!(root_diff.port_children(port).next().is_none());
         }
     }
 }

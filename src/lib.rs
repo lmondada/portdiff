@@ -1,11 +1,11 @@
 mod graph;
 mod port;
 pub mod port_diff;
+pub mod subgraph;
 
 #[cfg(feature = "portgraph")]
 pub mod portgraph;
 
 pub use graph::Graph;
-use port::UnboundPort;
+use port::Site;
 pub use port_diff::PortDiff;
-// pub use vertex::{DetVertex, DetVertexCreator, UniqueVertex};

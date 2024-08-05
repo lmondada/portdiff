@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{port::BoundPort, UnboundPort};
+use crate::{port::BoundPort, Site};
 
-use super::port::PortSide;
+use super::port::EdgeEnd;
 
 /// A graph for port diffing.
 ///
@@ -12,7 +12,7 @@ use super::port::PortSide;
 ///
 /// Incident edges can furthermore be distinguished using a port label type,
 /// attached to the edge ends.
-pub trait Graph: Sized {
+pub trait Graph: Default + Clone {
     type Node: Ord + Copy;
     type Edge: Ord + Copy;
     type PortLabel: Ord + Clone;
@@ -23,84 +23,45 @@ pub trait Graph: Sized {
     /// Iterate over all edges in the graph.
     fn edges_iter(&self) -> impl Iterator<Item = Self::Edge> + '_;
 
-    /// Convert a bound port (given by edge and port side) to an unbound port
-    /// (given by node and port label).
+    /// Find the site of a bound port.
     ///
-    /// There is a unique unbound port for every bound port. The reverse is not
-    /// true: unbound ports may not have an incident edge, or may have multiple.
-    fn to_unbound(
+    /// There is a unique site for every bound port. The reverse is not
+    /// true: site may not have an incident edge, or may have multiple.
+    fn get_port_site(&self, bound_port: BoundPort<Self::Edge>)
+        -> Site<Self::Node, Self::PortLabel>;
+
+    fn get_bound_ports(
         &self,
-        bound_port: BoundPort<Self::Edge>,
-    ) -> UnboundPort<Self::Node, Self::PortLabel>;
+        site: Site<Self::Node, Self::PortLabel>,
+    ) -> impl Iterator<Item = BoundPort<Self::Edge>> + '_;
+
+    fn get_sites(
+        &self,
+        node: Self::Node,
+    ) -> impl Iterator<Item = Site<Self::Node, Self::PortLabel>> + '_;
 
     /// The node incident to a given edge and port side.
     ///
     /// This can be obtained from the bound -> unbound port map.
-    fn incident_node(&self, edge: Self::Edge, port: PortSide) -> Self::Node {
-        let bound_port = BoundPort { edge, port };
-        self.to_unbound(bound_port).node
+    fn incident_node(&self, edge: Self::Edge, end: EdgeEnd) -> Self::Node {
+        let bound_port = BoundPort { edge, end };
+        self.get_port_site(bound_port).node
     }
-}
 
-pub trait GraphBuilder<G: Graph> {
-    type NodeId: Ord + Copy;
-
-    fn new() -> Self;
-
-    fn add_edge(
+    fn link_sites(
         &mut self,
-        left: UnboundPort<Self::NodeId, G::PortLabel>,
-        right: UnboundPort<Self::NodeId, G::PortLabel>,
-    );
+        left: Site<Self::Node, Self::PortLabel>,
+        right: Site<Self::Node, Self::PortLabel>,
+    ) -> (BoundPort<Self::Edge>, BoundPort<Self::Edge>);
 
-    fn add_node(&mut self, node: G::Node) -> Self::NodeId;
-
-    /// Add a subgraph to `self`
+    /// Add a subgraph of `graph` to `self`.
     ///
-    /// The `nodes` iterator provides all nodes in the subgraph. The `exclude_edges`
-    /// iterator provides all edges in the subgraph that should be excluded from
-    /// the induced subgraph.
+    /// Add the subgraph of `graph` that is induced by `nodes`.
+    ///
+    /// Return a map from `nodes` in `graph` to the new nodes in `self`.
     fn add_subgraph(
         &mut self,
-        graph: &G,
-        nodes: impl Iterator<Item = G::Node>,
-        exclude_edges: impl Iterator<Item = G::Edge>,
-    ) -> BTreeMap<G::Node, Self::NodeId>
-    where
-        Self: Sized,
-    {
-        let nodes: BTreeSet<_> = nodes.collect();
-        let exclude_edges: BTreeSet<_> = exclude_edges.collect();
-        let remap: BTreeMap<_, _> = nodes.iter().map(|&n| (n, self.add_node(n))).collect();
-
-        for edge in graph.edges_iter() {
-            if exclude_edges.contains(&edge) {
-                continue;
-            }
-            let left = graph.to_unbound(BoundPort {
-                edge,
-                port: PortSide::Left,
-            });
-            let right = graph.to_unbound(BoundPort {
-                edge,
-                port: PortSide::Right,
-            });
-            if !nodes.contains(&left.node) || !nodes.contains(&right.node) {
-                continue;
-            }
-            let left_node = remap[&left.node];
-            let right_node = remap[&right.node];
-            self.add_edge(
-                UnboundPort {
-                    node: left_node,
-                    port: left.port,
-                },
-                UnboundPort {
-                    node: right_node,
-                    port: right.port,
-                },
-            );
-        }
-        remap
-    }
+        graph: &Self,
+        nodes: &BTreeSet<Self::Node>,
+    ) -> BTreeMap<Self::Node, Self::Node>;
 }
