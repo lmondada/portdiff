@@ -1,7 +1,10 @@
 mod extract;
 mod rewrite;
+mod serial_edge_data;
 mod squash;
 // mod traverser;
+
+pub use extract::IncompatiblePortDiff;
 
 use std::{
     cmp,
@@ -18,16 +21,19 @@ use crate::{
 };
 use bimap::BiBTreeMap;
 use derive_more::{From, Into};
+use derive_where::derive_where;
 use itertools::Itertools;
 use relrc::RelRc;
+use serde::{Deserialize, Serialize};
 
 use crate::port::Site;
 
 // pub use traverser::DiffTraverser;
 
 #[derive(From)]
+#[derive_where(Clone; G: Graph)]
 pub struct PortDiff<G: Graph> {
-    data: RelRc<PortDiffData<G>, EdgeData<G>>,
+    pub(crate) data: RelRc<PortDiffData<G>, EdgeData<G>>,
 }
 
 pub type PortDiffPtr<G> = *const relrc::node::InnerData<PortDiffData<G>, EdgeData<G>>;
@@ -44,14 +50,6 @@ impl<G: Graph> PortDiff<G> {
 
     pub(crate) fn as_ptr(&self) -> PortDiffPtr<G> {
         RelRc::as_ptr(&self.data)
-    }
-}
-
-impl<G: Graph> Clone for PortDiff<G> {
-    fn clone(&self) -> Self {
-        Self {
-            data: self.data.clone(),
-        }
     }
 }
 
@@ -91,6 +89,12 @@ impl<G: Graph> Ord for PortDiff<G> {
         self.as_ptr().cmp(&other.as_ptr())
     }
 }
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(bound(serialize = "G: Serialize, G::Node: Serialize, G::PortLabel: Serialize"))]
+#[serde(bound(
+    deserialize = "G: Deserialize<'de>, G::Node: Deserialize<'de>, G::PortLabel: Deserialize<'de>"
+))]
 pub struct PortDiffData<G: Graph> {
     /// The internal graph
     graph: G,
@@ -101,9 +105,12 @@ pub struct PortDiffData<G: Graph> {
 }
 
 /// The incoming edge at a portdiff, given by its index.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, From, Into)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, From, Into, Serialize, Deserialize,
+)]
 pub struct IncomingEdgeIndex(usize);
 
+#[derive_where(Clone; G: Graph)]
 pub struct EdgeData<G: Graph> {
     /// The parent subgraph that is rewritten.
     subgraph: Subgraph<G>,
@@ -112,15 +119,6 @@ pub struct EdgeData<G: Graph> {
     /// The domain of the map is the union of the boundary of `subgraph` and
     /// the boundary ports of `parent` that are on `subgraph.nodes`.
     port_map: BiBTreeMap<Port<G>, BoundaryIndex>,
-}
-
-impl<G: Graph> Clone for EdgeData<G> {
-    fn clone(&self) -> Self {
-        Self {
-            subgraph: self.subgraph.clone(),
-            port_map: self.port_map.clone(),
-        }
-    }
 }
 
 impl<G: Graph> EdgeData<G> {
@@ -324,6 +322,12 @@ impl<G: Graph> PortDiff<G> {
 /// A piece of data along with its owning portdiff.
 ///
 /// This is useful for ports, node indices etc.
+#[derive_where(Clone; G: Graph, D: Clone)]
+#[derive_where(PartialEq; G: Graph, D: PartialEq)]
+#[derive_where(Eq; G: Graph, D: Eq)]
+#[derive_where(Hash; G: Graph, D: Hash)]
+#[derive_where(PartialOrd; G: Graph, D: PartialOrd)]
+#[derive_where(Ord; G: Graph, D: Ord)]
 pub struct Owned<D, G: Graph> {
     pub data: D,
     pub owner: PortDiff<G>,
@@ -351,56 +355,15 @@ impl<G: Graph> Owned<BoundPort<G::Edge>, G> {
     }
 }
 
-impl<D: Clone, G: Graph> Clone for Owned<D, G> {
-    fn clone(&self) -> Self {
-        Self {
-            data: self.data.clone(),
-            owner: self.owner.clone(),
-        }
-    }
-}
-
-impl<D: PartialEq, G: Graph> PartialEq for Owned<D, G> {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data && self.owner == other.owner
-    }
-}
-
-impl<D: Eq, G: Graph> Eq for Owned<D, G> {}
-
-impl<D: PartialOrd, G: Graph> PartialOrd for Owned<D, G> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self.data.partial_cmp(&other.data) {
-            Some(core::cmp::Ordering::Equal) => self.owner.partial_cmp(&other.owner),
-            ord => ord,
-        }
-    }
-}
-
-impl<D: Ord, G: Graph> Ord for Owned<D, G> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.data
-            .cmp(&other.data)
-            .then_with(|| self.owner.cmp(&other.owner))
-    }
-}
-
-impl<D: Hash, G: Graph> Hash for Owned<D, G> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.data.hash(state);
-        self.owner.hash(state);
-    }
-}
-
 #[cfg(feature = "portgraph")]
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use portgraph::{LinkMut, NodeIndex, PortGraph, PortMut, PortOffset};
     use rstest::{fixture, rstest};
 
-    use crate::port::EdgeEnd;
+    use crate::{port::EdgeEnd, GraphView};
 
     use super::*;
 
@@ -419,7 +382,7 @@ mod tests {
     }
 
     #[fixture]
-    pub(crate) fn root_diff() -> TestPortDiff {
+    pub(crate) fn parent_child_diffs() -> [TestPortDiff; 2] {
         let mut graph = PortGraph::new();
 
         let n0 = graph.add_node(0, 3);
@@ -432,22 +395,38 @@ mod tests {
             graph.link_nodes(n2, i, n3, i).unwrap();
         }
         graph.link_nodes(n1, 0, n2, 0).unwrap();
-        PortDiff::from_graph(graph)
+        let root = PortDiff::from_graph(graph);
+
+        let mut rhs = PortGraph::new();
+        let new_n1 = rhs.add_node(3, 0);
+        let new_n2 = rhs.add_node(0, 3);
+        let child_nodes = BTreeSet::from_iter([n1, n2]);
+        let node_map: BTreeMap<_, _> = [(n1, new_n1), (n2, new_n2)].into_iter().collect();
+        let child = root
+            .rewrite_induced(&child_nodes, rhs, |p| {
+                let old_site = Owned::new(p, root.clone()).site();
+                Site {
+                    node: node_map[&old_site.node],
+                    port: old_site.port,
+                }
+            })
+            .unwrap();
+        [root, child]
     }
 
     #[rstest]
-    fn test_register_child(root_diff: TestPortDiff) {
-        let (n0, n1, n2, _) = Graph::nodes_iter(&root_diff.graph).collect_tuple().unwrap();
-        let mut rhs = PortGraph::new();
-        rhs.add_node(3, 0);
-        rhs.add_node(0, 3);
-        let child_nodes = BTreeSet::from_iter([n1, n2]);
-        let child_a = root_diff
-            .rewrite_induced(&child_nodes, rhs, |p| {
-                Owned::new(p, root_diff.clone()).site()
-            })
-            .unwrap();
-        assert_eq!(child_a.n_boundary_ports(), 6);
+    fn serialize(parent_child_diffs: [TestPortDiff; 2]) {
+        let [_, child] = parent_child_diffs;
+        let graph = GraphView::from_sinks(vec![child]);
+        let serialized = serde_json::to_string_pretty(&graph).unwrap();
+        insta::assert_snapshot!(serialized);
+    }
+
+    #[rstest]
+    fn test_register_child(parent_child_diffs: [TestPortDiff; 2]) {
+        let [parent, child] = parent_child_diffs;
+        let (n0, n1, n2, _) = Graph::nodes_iter(&parent.graph).collect_tuple().unwrap();
+        assert_eq!(child.n_boundary_ports(), 6);
 
         for (node, port_side) in [(n0, EdgeEnd::Right), (n2, EdgeEnd::Left)] {
             for offset in 0..3 {
@@ -455,7 +434,7 @@ mod tests {
                     edge: (node, PortOffset::Outgoing(offset)).try_into().unwrap(),
                     end: port_side,
                 });
-                assert_eq!(root_diff.port_children(port).next().unwrap(), child_a);
+                assert_eq!(parent.port_children(port).next().unwrap(), child);
             }
         }
 
@@ -464,7 +443,7 @@ mod tests {
                 edge: (n1, PortOffset::Outgoing(0)).try_into().unwrap(),
                 end: port_side,
             });
-            assert!(root_diff.port_children(port).next().is_none());
+            assert!(parent.port_children(port).next().is_none());
         }
     }
 }

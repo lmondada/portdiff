@@ -1,46 +1,36 @@
-# React Template
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-An opinionated React template that helps you understand the workings of a React app without abstractions like `react-scripts`.
+## Getting Started
 
-The template, which is by no means a perfect React development experience and is a work in progress, aims to be thoroughly documented to help you understand what goes on under the hood of a React app.
+First, run the development server:
 
-**Table of Contents**
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-- [Tools](#tools)
-- [Visual Studio Code Extensions](#visual-studio-code-extensions)
-- [Scripts](#scripts)
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Tools
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-The following tools are used to build the React app and improve the development experience. These configuration files for these tools contain documentation to help you understand what each option does. More complex options will also contain a link to outside documentation that can explain it better.
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-- [Webpack](https://webpack.js.org/)
-- [Babel](https://babeljs.io/docs/en/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [React](https://reactjs.org/)
-- [Redux](https://redux.js.org/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [PostCSS](https://postcss.org/)
-- [Prettier](https://prettier.io/)
-- [ESLint](https://eslint.org/)
+## Learn More
 
-## Visual Studio Code Extensions
+To learn more about Next.js, take a look at the following resources:
 
-The follow extensions for code formatting and linting should be recommended to you if you open the project in Visual Studio Code:
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-- [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-## Scripts
+## Deploy on Vercel
 
-The following scripts are available and can be used in the form of `npm run [script_name]`:
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-- `develop` - This is the script to run when you are actively developing your React app. This will run the webpack dev server in development mode with fast refresh so you can save your changes and see them in real time without refreshing your app.
-
-- `build:dev` - Creates a development build of your React app output to the `build` folder at the root directory.
-
-- `build:prod` - Creates a production build of your React app output to the `build` folder at the root directory. This will minify bundles and purge unused classes from your code to create the smallest build possible.
-
-- `analyze:dev` - Runs the Webpack bundle analyzer and provides you with a link that you can use to see what packages your Webpack bundle consists of.
-
-- `analyze:prod` - Runs the Webpack bundle analyzer but in production mode which will minify scripts first and then provides you with a link that you can use to see what packages your Webpack bundle consists of.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.

@@ -1,0 +1,62 @@
+---
+source: src/subgraph.rs
+expression: boundary
+---
+[
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 0,
+            node: NodeIndex(0),
+        },
+        end: Right,
+    },
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 1,
+            node: NodeIndex(0),
+        },
+        end: Right,
+    },
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 2,
+            node: NodeIndex(0),
+        },
+        end: Right,
+    },
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 0,
+            node: NodeIndex(1),
+        },
+        end: Left,
+    },
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 0,
+            node: NodeIndex(1),
+        },
+        end: Right,
+    },
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 0,
+            node: NodeIndex(2),
+        },
+        end: Left,
+    },
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 1,
+            node: NodeIndex(2),
+        },
+        end: Left,
+    },
+    BoundPort {
+        edge: PortgraphEdge {
+            outgoing: 2,
+            node: NodeIndex(2),
+        },
+        end: Left,
+    },
+]

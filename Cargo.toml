@@ -6,23 +6,45 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bimap = "0.6.3"
+bimap = { version = "0.6.3", features = ["serde"] }
 delegate = "0.12.0"
-derive_more = "0.99.18"
+derive_more = { workspace = true }
 itertools = "0.13.0"
-petgraph = "0.6.5"
-portgraph = { version = "0.12.2", optional = true }
-relrc = { path = "../relrc", features = ["petgraph"] }
+petgraph = { workspace = true }
+portgraph = { workspace = true, optional = true, features = ["serde"] }
+relrc = { workspace = true, features = ["serde"] }
 thiserror = "1.0.63"
 uuid = { version = "1.8.0", features = ["v4", "serde"] }
+serde = { workspace = true, features = ["derive"] }
+derive-where = "1.2.7"
 
 [dev-dependencies]
 insta = "1.39.0"
-portgraph = "0.12.2"
+portgraph = { workspace = true }
 rstest = "0.21.0"
+serde_json = "1.0.122"
 
 [workspace]
-members = ["viewer/wasm"]
+members = ["viewer/shared", "viewer/shared_types"]
+resolver = "1"
+
+[workspace.package]
+authors = ["Luca Mondada"]
+edition = "2021"
+license = "Apache-2.0"
+rust-version = "1.80"
+repository = "https://github.com/lmondada/portdiff"
+
+[workspace.dependencies]
+anyhow = "1.0.79"
+crux_core = "0.8"
+serde = "1.0.204"
+portdiff = { path = "." }
+# relrc = { version = "0.2.1", features = ["petgraph"] }
+relrc = { path = "../relrc", features = ["petgraph"] }
+portgraph = { version = "0.12.2" }
+derive_more = "0.99.18"
+petgraph = "0.6.5"
 
 [features]
 portgraph = ["dep:portgraph"]

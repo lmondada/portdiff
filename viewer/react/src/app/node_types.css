@@ -1,0 +1,15 @@
+/* .node {
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+} */
+
+
+.selected > .node  {
+    border: 1px solid rgba(4, 4, 136, 0.964);
+    background-color: #e6f3ff; /* Light blue background */
+    filter: brightness(90%);
+}
+

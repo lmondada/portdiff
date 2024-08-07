@@ -1,11 +1,12 @@
 //! Data types for ports
 
 use derive_more::{From, Into};
-use std::cmp;
+use derive_where::derive_where;
+use serde::{Deserialize, Serialize};
 
 use crate::{port_diff::Owned, Graph};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum EdgeEnd {
     Left,
     Right,
@@ -24,7 +25,7 @@ impl EdgeEnd {
 ///
 /// Uniquely given by a node and a port label. There may be 0, 1 or multiple
 /// ports at the same site.
-#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Site<N, P> {
     /// The node
     pub node: N,
@@ -49,13 +50,23 @@ impl<N, P> Site<N, P> {
 }
 
 /// A boundary port, given by the index of the port in the boundary.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, From, Into)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, From, Into, Serialize, Deserialize,
+)]
 pub struct BoundaryIndex(usize);
 
 /// A port in the graph, either connected to an edge or marking a subgraph boundary.
 ///
 /// The port belongs to a site. There may be 0 or 1 edge connected to a port.
-#[derive(Debug, From)]
+#[derive(Debug, From, Serialize, Deserialize)]
+#[serde(bound(
+    serialize = "G::Edge: Serialize",
+    deserialize = "G::Edge: Deserialize<'de>"
+))]
+#[derive_where(PartialEq; G: Graph)]
+#[derive_where(Eq; G: Graph)]
+#[derive_where(PartialOrd; G: Graph)]
+#[derive_where(Ord; G: Graph)]
 pub enum Port<G: Graph> {
     /// The i-th boundary port of the graph.
     Boundary(BoundaryIndex),
@@ -63,36 +74,11 @@ pub enum Port<G: Graph> {
     Bound(BoundPort<G::Edge>),
 }
 
-impl<G: Graph> PartialEq for Port<G> {
-    fn eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl<G: Graph> Eq for Port<G> {}
-
-impl<G: Graph> PartialOrd for Port<G> {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<G: Graph> Ord for Port<G> {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
-        match (self, other) {
-            (Self::Boundary(a), Self::Boundary(b)) => a.cmp(b),
-            (Self::Bound(a), Self::Bound(b)) => a.cmp(b),
-            (Self::Boundary(_), Self::Bound(_)) => cmp::Ordering::Less,
-            (Self::Bound(_), Self::Boundary(_)) => cmp::Ordering::Greater,
-        }
-    }
-}
-
 /// A port that is connected to an edge.
 ///
 /// This is given by a an edge and an edge end. This always determines the
 /// port uniquely.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct BoundPort<E> {
     /// The edge
     pub edge: E,

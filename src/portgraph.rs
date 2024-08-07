@@ -8,11 +8,38 @@ use crate::{
 use itertools::Itertools;
 use pg::{LinkMut, LinkView, PortGraph, PortMut, PortView};
 use portgraph as pg;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PortgraphEdge {
     outgoing: u16,
     node: pg::NodeIndex,
+}
+
+impl PortgraphEdge {
+    pub fn new(node: pg::NodeIndex, outgoing: u16) -> Self {
+        Self { node, outgoing }
+    }
+
+    pub fn out_node(&self) -> pg::NodeIndex {
+        self.node
+    }
+
+    pub fn out_offset(&self) -> pg::PortOffset {
+        pg::PortOffset::Outgoing(self.outgoing)
+    }
+
+    pub fn in_node(&self, g: &PortGraph) -> pg::NodeIndex {
+        let port = g.port_index(self.out_node(), self.out_offset()).unwrap();
+        let in_port = g.port_link(port).unwrap();
+        g.port_node(in_port).unwrap()
+    }
+
+    pub fn in_offset(&self, g: &PortGraph) -> pg::PortOffset {
+        let port = g.port_index(self.out_node(), self.out_offset()).unwrap();
+        let in_port = g.port_link(port).unwrap();
+        g.port_offset(in_port).unwrap()
+    }
 }
 
 impl TryFrom<(pg::NodeIndex, pg::PortOffset)> for PortgraphEdge {
@@ -136,57 +163,48 @@ impl Graph for pg::PortGraph {
         graph: &Self,
         nodes: &std::collections::BTreeSet<Self::Node>,
     ) -> std::collections::BTreeMap<Self::Node, Self::Node> {
+        println!("Adding subgraph with {} nodes", nodes.len());
         let mut nodes_map = BTreeMap::new();
+        println!("N nodes in self: {}", self.node_count());
         for node in nodes {
             let new_node = self.add_node(0, 0);
             nodes_map.insert(*node, new_node);
         }
+        println!(
+            "N nodes in self after adding subgraph: {}",
+            self.node_count()
+        );
 
         // Add every port in `graph` to `self`
-        for port in graph.ports_iter() {
-            let src = graph.port_node(port).unwrap();
-            let src_offset = graph.port_offset(port).unwrap();
-            resize_ports(
-                self,
-                &Site {
-                    node: src,
-                    port: src_offset,
-                },
+        for (&node, &self_node) in &nodes_map {
+            self.set_num_ports(
+                self_node,
+                graph.num_inputs(node),
+                graph.num_outputs(node),
+                |_, _| {},
             );
-            // Add all outgoing edges in `port`.
-            if graph.port_direction(port).unwrap() == pg::Direction::Outgoing {
-                for (_, tgt) in graph.port_links(port) {
-                    let tgt_offset = graph.port_offset(tgt).unwrap();
-                    let tgt = graph.port_node(tgt).unwrap();
-                    resize_ports(
-                        self,
-                        &Site {
-                            node: tgt,
-                            port: tgt_offset,
-                        },
-                    );
-                    self.link_offsets(nodes_map[&src], src_offset, nodes_map[&tgt], tgt_offset)
-                        .unwrap();
+
+            // Add all outgoing edges of `node` with target in `nodes`.
+            for port in graph.all_ports(node) {
+                let offset = graph.port_offset(port).unwrap();
+                for (_, other_port) in graph.port_links(port) {
+                    let other_node = graph.port_node(other_port).unwrap();
+                    let Some(other_self_node) = nodes_map.get(&other_node) else {
+                        // Ignore edges not in induced subgraph
+                        continue;
+                    };
+                    let other_offset = graph.port_offset(other_port).unwrap();
+                    if (other_node, other_offset) <= (node, offset) {
+                        // By only adding the edge when other is smaller, we
+                        // i) avoid duplicating edges and ii) we know that the
+                        // other ports have already been resized.
+                        self.link_offsets(self_node, offset, *other_self_node, other_offset)
+                            .unwrap();
+                    }
                 }
             }
         }
         nodes_map
-    }
-}
-
-fn resize_ports(graph: &mut PortGraph, site: &Site<pg::NodeIndex, pg::PortOffset>) {
-    let node = site.node;
-    let offset = site.port.index();
-    let dir = site.port.direction();
-
-    if graph.num_ports(node, dir) <= offset as usize {
-        let mut in_ports = graph.num_inputs(node);
-        let mut out_ports = graph.num_outputs(node);
-        match dir {
-            pg::Direction::Incoming => in_ports = offset + 1,
-            pg::Direction::Outgoing => out_ports = offset + 1,
-        }
-        graph.set_num_ports(node, in_ports, out_ports, |_, _| {});
     }
 }
 

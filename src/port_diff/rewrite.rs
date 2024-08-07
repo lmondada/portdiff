@@ -125,7 +125,7 @@ impl<G: Graph> PortDiff<G> {
             // Map boundaries
             let mut port_map = BiBTreeMap::new();
             for b in subgraph.boundary(&diff.graph) {
-                if used_bound_ports.remove(&b) {
+                if !used_bound_ports.remove(&b) {
                     let port = Port::Bound(b);
                     let site = boundary_map(Owned {
                         data: port,
@@ -137,7 +137,7 @@ impl<G: Graph> PortDiff<G> {
                 }
             }
             for b in diff.boundary_iter() {
-                if used_unbound_ports.remove(&b) {
+                if !used_unbound_ports.remove(&b) {
                     let port = Port::Boundary(b);
                     let site = boundary_map(Owned {
                         data: port,
@@ -389,20 +389,21 @@ mod tests {
 
     use crate::{
         port::Port,
-        port_diff::tests::{root_diff, TestPortDiff},
+        port_diff::tests::{parent_child_diffs, TestPortDiff},
     };
 
     use super::*;
 
     #[rstest]
-    fn test_rewrite(root_diff: TestPortDiff) {
+    fn test_rewrite(parent_child_diffs: [TestPortDiff; 2]) {
+        let [parent, _] = parent_child_diffs;
         let rewrite = |v| {
             let mut rhs = PortGraph::new();
             let n0 = rhs.add_node(0, 4);
             let n1 = rhs.add_node(4, 0);
             rhs.link_nodes(n0, 3, n1, 3).unwrap();
             let mut port_cnt = 0;
-            root_diff.rewrite_induced(&BTreeSet::from_iter([v]), rhs, |port| {
+            parent.rewrite_induced(&BTreeSet::from_iter([v]), rhs, |_| {
                 let site = Site {
                     node: n0,
                     port: PortOffset::Outgoing(port_cnt),
@@ -411,9 +412,7 @@ mod tests {
                 site
             })
         };
-        let (_, n1, n2, _) = PortView::nodes_iter(&root_diff.graph)
-            .collect_tuple()
-            .unwrap();
+        let (_, n1, n2, _) = PortView::nodes_iter(&parent.graph).collect_tuple().unwrap();
         let child_a = rewrite(n1).unwrap();
         let child_b = rewrite(n2).unwrap();
 

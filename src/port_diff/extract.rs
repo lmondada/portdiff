@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use itertools::Itertools;
 use petgraph::visit::{EdgeRef, IntoEdges};
-use relrc::AncestorGraph;
+use relrc::GraphView;
 
 use crate::{Graph, PortDiff};
 
@@ -18,8 +18,13 @@ impl<G: Graph> PortDiff<G> {
     {
         let graphs = diffs
             .into_iter()
-            .map(|d| AncestorGraph::from_terminals(vec![d.data.clone()]))
+            .map(|d| GraphView::from_sinks(vec![d.data.clone()]))
             .collect_vec();
+
+        if graphs.is_empty() {
+            return true;
+        }
+
         let merged_graph = graphs
             .clone()
             .into_iter()
@@ -27,9 +32,9 @@ impl<G: Graph> PortDiff<G> {
                 g1.merge(g2);
                 g1
             })
-            .unwrap();
+            .expect("not empty");
         // For each node that is an ancestor of two or more graphs...
-        for diff_ptr in AncestorGraph::lowest_common_ancestors(&graphs) {
+        for diff_ptr in GraphView::lowest_common_ancestors(&graphs) {
             // Check that its outgoing edges are compatible
             // (this must hold everywhere, but already holds elsewhere as the
             // set of outgoing edges in non-lca nodes remains unchanged).
@@ -49,8 +54,7 @@ impl<G: Graph> PortDiff<G> {
         // has a parent we can add it to the output.
         let mut final_diffs = vec![];
         while let Some(diff) = diffs.pop() {
-            let others =
-                AncestorGraph::from_terminals(diffs.iter().map(|d| d.data.clone()).collect());
+            let others = GraphView::from_sinks(diffs.iter().map(|d| d.data.clone()).collect());
             if others
                 .all_nodes()
                 .contains(&PortDiff::as_ptr(&diff.data.clone().into()).into())
@@ -64,7 +68,8 @@ impl<G: Graph> PortDiff<G> {
         }
         let mut out_graph = G::default();
         for diff in final_diffs {
-            out_graph.add_subgraph(&diff.graph, &BTreeSet::new());
+            let all_nodes = diff.graph.nodes_iter();
+            out_graph.add_subgraph(&diff.graph, &BTreeSet::from_iter(all_nodes));
         }
         Ok(out_graph)
     }
@@ -76,11 +81,18 @@ mod tests {
 
     use crate::port_diff::tests::TestPortDiff;
 
-    use super::super::tests::root_diff;
+    use super::super::tests::parent_child_diffs;
     use super::*;
 
+    #[test]
+    fn test_compatible_empty() {
+        let diffs: Vec<TestPortDiff> = vec![];
+        assert!(PortDiff::are_compatible(&diffs));
+    }
+
     #[rstest]
-    fn test_is_compatible(root_diff: TestPortDiff) {
+    fn test_is_compatible(parent_child_diffs: [TestPortDiff; 2]) {
+        let [root_diff, _] = parent_child_diffs;
         let (n0, n1, n2, n3) = root_diff.nodes().collect_tuple().unwrap();
         let child_a = root_diff.identity_subgraph([n0, n1]);
         let child_aa = root_diff.identity_subgraph([n2, n3]);
@@ -88,10 +100,11 @@ mod tests {
     }
 
     #[rstest]
-    fn test_is_not_compatible(root_diff: TestPortDiff) {
-        let (n0, n1, n2, n3) = root_diff.nodes().collect_tuple().unwrap();
-        let child_a = root_diff.identity_subgraph([n0, n1]);
-        let child_b = root_diff.identity_subgraph([n1, n2, n3]);
+    fn test_is_not_compatible(parent_child_diffs: [TestPortDiff; 2]) {
+        let [parent, _] = parent_child_diffs;
+        let (n0, n1, n2, n3) = parent.nodes().collect_tuple().unwrap();
+        let child_a = parent.identity_subgraph([n0, n1]);
+        let child_b = parent.identity_subgraph([n1, n2, n3]);
         assert_eq!(
             child_a
                 .incoming(0.into())

@@ -1,104 +1,73 @@
-import ReactFlow, {
-    Background,
-    BackgroundVariant,
-    Controls,
-    Panel,
-    SelectionMode,
-} from "reactflow";
+import {
+  ReactFlow,
+  Background,
+  BackgroundVariant,
+  SelectionMode,
+} from "@xyflow/react";
 
-import EditModeButton from "./port_diff_viewer/EditModeButton";
-import { useEffect } from "react";
-import { nodeTypes } from "./port_diff_viewer/node_types";
-import usePortDiffState from "../hooks/usePortDiffState";
-import CommitButton from "./port_diff_viewer/CommitButton";
-import UpdatePorts from "./port_diff_viewer/UpdatePorts";
+import { RFGraph } from "shared_types/types/shared_types";
+import { useMemo } from "react";
+import placeGraph from "@/app/place_graph";
+import PortDiffNode from "./PortDiffNode";
 
 type PortDiffViewerProps = {
-    updatePortDiff: boolean;
-    sendUpdateHierarchy: () => void;
+  graph: RFGraph;
 };
-function PortDiffViewer({
-    updatePortDiff,
-    sendUpdateHierarchy,
-}: PortDiffViewerProps) {
-    const {
-        isEditMode,
-        toggleEditMode,
-        isCommitted,
-        commitSelection,
-        editHandlers,
-        viewHandlers,
-        nodes,
-        edges,
-        drainUpdatePortCounts,
-    } = usePortDiffState(updatePortDiff, sendUpdateHierarchy);
+function PortDiffViewer({ graph }: PortDiffViewerProps) {
+  // const onNodesChangeSelectOnly = useCallback(
+  //   (changes: NodeChange[]) => {
+  //     const selectChanges = changes.filter(
+  //       (change) => change.type === "select"
+  //     );
+  //     if (selectChanges.length !== 0) {
+  //       setGraphState((g) =>
+  //         g.applyNodesChange(selectChanges, setUpdatedPortCounts)
+  //       );
+  //     }
+  //   },
+  //   [graph, setGraphState, setUpdatedPortCounts]
+  // );
+  const viewHandlers = {
+    onNodesChange: () => {},
+    onEdgesChange: () => {},
+    // onConnect: () => { },
+    // onInit: () => { },
+    // isValidConnection: () => true,
+    // onDoubleClick: () => { },
+  };
 
-    // Pressing E toggles edit mode
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "e" || event.key === "E") {
-                toggleEditMode();
-            }
-        };
+  const flowOpts = {
+    nodesDraggable: true,
+    selectionOnDrag: false,
+    panOnDrag: true,
+    zoomOnDoubleClick: false,
+    selectionMode: "partial" as SelectionMode,
+  };
 
-        window.addEventListener("keydown", handleKeyDown);
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, []);
+  const bg = {
+    variant: "dots" as BackgroundVariant,
+    color: "#333",
+  };
 
-    const bg_opts = pick_background(isEditMode);
-    const flow_opts = pick_flow_options(isEditMode);
+  const { nodes, edges } = useMemo(() => placeGraph(graph), [graph]);
 
-    return (
-        <div style={{ height: "100%" }}>
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                {...(isEditMode ? editHandlers : viewHandlers)}
-                {...flow_opts}
-            >
-                <Background {...bg_opts} />
-                <Controls />
-                <Panel position="top-right">
-                    {!isCommitted ? (
-                        <CommitButton onClick={commitSelection} />
-                    ) : null}
-                    <EditModeButton
-                        isEditMode={isEditMode}
-                        toggleEditMode={toggleEditMode}
-                    />
-                </Panel>
-                <UpdatePorts drainUpdatePortCounts={drainUpdatePortCounts} />
-            </ReactFlow>
-        </div>
-    );
+  return (
+    <div style={{ height: "100%", width: "100%" }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        {...viewHandlers}
+        {...flowOpts}
+      >
+        <Background {...bg} />
+      </ReactFlow>
+    </div>
+  );
 }
 
-function pick_background(isEditMode: boolean) {
-    const variant = isEditMode
-        ? ("lines" as BackgroundVariant)
-        : ("dots" as BackgroundVariant);
-    const color = isEditMode ? "#FFCCCC" : "#333";
-    return { variant, color };
-}
-
-export function pick_flow_options(isEditMode: boolean) {
-    const nodesDraggable = isEditMode;
-    const nodesConnectable = isEditMode;
-    const selectionOnDrag = false;
-    const panOnDrag = true;
-    const zoomOnDoubleClick = false;
-    const selectionMode = "partial" as SelectionMode;
-    return {
-        zoomOnDoubleClick,
-        nodesDraggable,
-        nodesConnectable,
-        selectionOnDrag,
-        panOnDrag,
-        selectionMode,
-    };
-}
+const nodeTypes = {
+  custom: PortDiffNode,
+};
 
 export default PortDiffViewer;
