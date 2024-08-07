@@ -3,7 +3,8 @@
     0
   ],
   "sinks": [
-    1
+    1,
+    2
   ],
   "all_nodes": [
     {
@@ -92,40 +93,18 @@
             {
               "n": {
                 "first_port": 0,
-                "incoming": 4,
-                "outgoing": 0,
-                "capacity": 3
-              }
-            },
-            {
-              "n": {
-                "first_port": 3,
                 "incoming": 1,
-                "outgoing": 3,
-                "capacity": 3
+                "outgoing": 0,
+                "capacity": 0
               }
             }
           ],
-          "port_link": [
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-          ],
-          "port_meta": [
-            1,
-            1,
-            1,
-            2147483650,
-            2147483650,
-            2147483650
-          ],
+          "port_link": [],
+          "port_meta": [],
           "node_free": null,
           "port_free": [],
-          "node_count": 2,
-          "port_count": 6,
+          "node_count": 1,
+          "port_count": 0,
           "link_count": 0
         },
         "boundary": [
@@ -133,52 +112,7 @@
             {
               "node": 0,
               "port": {
-                "Incoming": 0
-              }
-            },
-            0
-          ],
-          [
-            {
-              "node": 0,
-              "port": {
-                "Incoming": 1
-              }
-            },
-            0
-          ],
-          [
-            {
-              "node": 0,
-              "port": {
-                "Incoming": 2
-              }
-            },
-            0
-          ],
-          [
-            {
-              "node": 1,
-              "port": {
                 "Outgoing": 0
-              }
-            },
-            0
-          ],
-          [
-            {
-              "node": 1,
-              "port": {
-                "Outgoing": 1
-              }
-            },
-            0
-          ],
-          [
-            {
-              "node": 1,
-              "port": {
-                "Outgoing": 2
               }
             },
             0
@@ -191,13 +125,21 @@
           "value": {
             "subgraph": {
               "nodes": [
-                1,
-                2
+                0,
+                1
               ],
               "edges": [
                 {
                   "outgoing": 0,
-                  "node": 1
+                  "node": 0
+                },
+                {
+                  "outgoing": 1,
+                  "node": 0
+                },
+                {
+                  "outgoing": 2,
+                  "node": 0
                 }
               ]
             },
@@ -207,72 +149,87 @@
                   "Bound": {
                     "edge": {
                       "outgoing": 0,
-                      "node": 0
+                      "node": 1
                     },
-                    "end": "Right"
+                    "end": "Left"
                   }
                 },
                 0
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "node_meta": [
+            {
+              "n": {
+                "first_port": 0,
+                "incoming": 1,
+                "outgoing": 0,
+                "capacity": 0
+              }
+            }
+          ],
+          "port_link": [],
+          "port_meta": [],
+          "node_free": null,
+          "port_free": [],
+          "node_count": 1,
+          "port_count": 0,
+          "link_count": 0
+        },
+        "boundary": [
+          [
+            {
+              "node": 0,
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                2,
+                3
               ],
+              "edges": [
+                {
+                  "outgoing": 0,
+                  "node": 2
+                },
+                {
+                  "outgoing": 1,
+                  "node": 2
+                },
+                {
+                  "outgoing": 2,
+                  "node": 2
+                }
+              ]
+            },
+            "port_map": [
               [
                 {
                   "Bound": {
                     "edge": {
                       "outgoing": 0,
-                      "node": 2
-                    },
-                    "end": "Left"
-                  }
-                },
-                3
-              ],
-              [
-                {
-                  "Bound": {
-                    "edge": {
-                      "outgoing": 1,
-                      "node": 0
+                      "node": 1
                     },
                     "end": "Right"
                   }
                 },
-                1
-              ],
-              [
-                {
-                  "Bound": {
-                    "edge": {
-                      "outgoing": 1,
-                      "node": 2
-                    },
-                    "end": "Left"
-                  }
-                },
-                4
-              ],
-              [
-                {
-                  "Bound": {
-                    "edge": {
-                      "outgoing": 2,
-                      "node": 0
-                    },
-                    "end": "Right"
-                  }
-                },
-                2
-              ],
-              [
-                {
-                  "Bound": {
-                    "edge": {
-                      "outgoing": 2,
-                      "node": 2
-                    },
-                    "end": "Left"
-                  }
-                },
-                5
+                0
               ]
             ]
           }
@@ -281,4 +238,3 @@
     }
   ]
 }
-

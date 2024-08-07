@@ -30,3 +30,6 @@ uniffi = { version = "0.28.0", features = ["cli"] }
 
 [build-dependencies]
 uniffi = { version = "0.28.0", features = ["build"] }
+
+[dev-dependencies]
+rstest = "0.18.2"

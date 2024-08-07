@@ -58,6 +58,7 @@ mod tests {
     use std::collections::BTreeSet;
 
     use crux_core::testing::AppTester;
+    use rstest::rstest;
 
     use crate::model::LoadedModel;
 
@@ -74,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn test_app_load() {
+    fn test_app_load_asserts() {
         let app = AppTester::<PortDiffViewer, _>::default();
         let mut model = Model::None;
         app.update(
@@ -107,5 +108,22 @@ mod tests {
         assert_eq!(graph.edges.len(), 6);
         assert_eq!(hierarchy, vec![(DiffId(0), DiffId(1)).into()]);
         assert_eq!(selected, BTreeSet::from([DiffId(1)]));
+    }
+
+    #[rstest]
+    #[case("parent_child.json")]
+    #[case("parent_two_children.json")]
+    fn test_app_load_many(#[case] file_name: &str) {
+        let app = AppTester::<PortDiffViewer, _>::default();
+        let mut model = Model::None;
+        let file_path = format!("../../test_files/{}", file_name);
+        dbg!(&file_path);
+        app.update(
+            Event::DeserializeData(std::fs::read_to_string(&file_path).unwrap()),
+            &mut model,
+        );
+        let Model::Loaded(LoadedModel { .. }) = &model else {
+            panic!("expected loaded model");
+        };
     }
 }

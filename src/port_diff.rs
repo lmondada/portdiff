@@ -414,10 +414,63 @@ mod tests {
         [root, child]
     }
 
+    #[fixture]
+    pub(crate) fn parent_two_children_diffs() -> [TestPortDiff; 3] {
+        let mut graph = PortGraph::new();
+
+        let n0 = graph.add_node(0, 3);
+        let n1 = graph.add_node(3, 1);
+        let n2 = graph.add_node(1, 3);
+        let n3 = graph.add_node(3, 0);
+
+        for i in 0..3 {
+            graph.link_nodes(n0, i, n1, i).unwrap();
+            graph.link_nodes(n2, i, n3, i).unwrap();
+        }
+        graph.link_nodes(n1, 0, n2, 0).unwrap();
+        let root = PortDiff::from_graph(graph);
+
+        let child_1 = {
+            let mut rhs = PortGraph::new();
+            let new_n1 = rhs.add_node(0, 0);
+            let child_nodes = BTreeSet::from_iter([n0, n1]);
+            root.rewrite_induced(&child_nodes, rhs, |_| {
+                // there is only one port, hard code it
+                Site {
+                    node: new_n1,
+                    port: PortOffset::Outgoing(0),
+                }
+            })
+            .unwrap()
+        };
+        let child_2 = {
+            let mut rhs = PortGraph::new();
+            let new_n2 = rhs.add_node(0, 0);
+            let child_nodes = BTreeSet::from_iter([n2, n3]);
+            root.rewrite_induced(&child_nodes, rhs, |_| {
+                // there is only one port, hard code it
+                Site {
+                    node: new_n2,
+                    port: PortOffset::Incoming(0),
+                }
+            })
+            .unwrap()
+        };
+        [root, child_1, child_2]
+    }
+
     #[rstest]
-    fn serialize(parent_child_diffs: [TestPortDiff; 2]) {
+    fn serialize_parent_child(parent_child_diffs: [TestPortDiff; 2]) {
         let [_, child] = parent_child_diffs;
         let graph = GraphView::from_sinks(vec![child]);
+        let serialized = serde_json::to_string_pretty(&graph).unwrap();
+        insta::assert_snapshot!(serialized);
+    }
+
+    #[rstest]
+    fn serialize_parent_two_children(parent_two_children_diffs: [TestPortDiff; 3]) {
+        let [_, child_1, child_2] = parent_two_children_diffs;
+        let graph = GraphView::from_sinks(vec![child_1, child_2]);
         let serialized = serde_json::to_string_pretty(&graph).unwrap();
         insta::assert_snapshot!(serialized);
     }

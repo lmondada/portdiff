@@ -58,6 +58,7 @@ fn incident_edges<G: Graph>(
     true
 }
 
+#[cfg(feature = "portgraph")]
 #[cfg(test)]
 mod tests {
     use itertools::Itertools;
