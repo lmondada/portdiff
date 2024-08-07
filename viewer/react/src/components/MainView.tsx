@@ -3,7 +3,6 @@ import { useState } from "react";
 import PortDiffViewer from "./PortDiffViewer";
 
 import "tailwindcss/tailwind.css";
-import "reactflow/dist/style.css";
 import DragDivider from "./DragDivider";
 import HierarchyViewer from "./HierarchyViewer";
 

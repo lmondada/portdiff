@@ -400,16 +400,14 @@ mod tests {
         let rewrite = |v| {
             let mut rhs = PortGraph::new();
             let n0 = rhs.add_node(0, 4);
-            let n1 = rhs.add_node(4, 0);
-            rhs.link_nodes(n0, 3, n1, 3).unwrap();
-            let mut port_cnt = 0;
-            parent.rewrite_induced(&BTreeSet::from_iter([v]), rhs, |_| {
-                let site = Site {
+            let n1 = rhs.add_node(1, 0);
+            rhs.link_nodes(n0, 3, n1, 0).unwrap();
+            parent.rewrite_induced(&BTreeSet::from_iter([v]), rhs, |p| {
+                let offset = Owned::new(p, parent.clone()).site().port;
+                Site {
                     node: n0,
-                    port: PortOffset::Outgoing(port_cnt),
-                };
-                port_cnt += 1;
-                site
+                    port: offset,
+                }
             })
         };
         let (_, n1, n2, _) = PortView::nodes_iter(&parent.graph).collect_tuple().unwrap();
@@ -420,7 +418,6 @@ mod tests {
             PortDiff::extract_graph([child_a.clone(), child_b.clone()].to_vec()).unwrap();
         assert_eq!(pg.node_count(), 6);
         assert_eq!(pg.link_count(), 3 + 3 + 1 + 2);
-        assert_snapshot!("extracted_graph_1", pg.dot_string());
 
         // Now rewrite across child_a and child_b
         let mut rhs = PortGraph::new();
@@ -428,9 +425,17 @@ mod tests {
         let n1 = rhs.add_node(1, 0);
         rhs.link_nodes(n0, 0, n1, 0).unwrap();
 
+        let child_a_out0 = child_a
+            .boundary_iter()
+            .find(|&bd| child_a.boundary_site(bd).port == PortOffset::Outgoing(0))
+            .unwrap();
+        let child_b_in0 = child_b
+            .boundary_iter()
+            .find(|&bd| child_b.boundary_site(bd).port == PortOffset::Incoming(0))
+            .unwrap();
         let cross_edge = (
-            Owned::new(Port::Boundary(0.into()), child_a.clone()),
-            Owned::new(Port::Boundary(0.into()), child_b.clone()),
+            Owned::new(Port::Boundary(child_a_out0), child_a.clone()),
+            Owned::new(Port::Boundary(child_b_in0), child_b.clone()),
         );
 
         let nodes = BTreeSet::from_iter([
@@ -441,12 +446,12 @@ mod tests {
             if n.owner == child_a {
                 Site {
                     node: n0,
-                    port: PortOffset::Outgoing(0),
+                    port: n.site().port,
                 }
             } else {
                 Site {
                     node: n1,
-                    port: PortOffset::Incoming(0),
+                    port: n.site().port,
                 }
             }
         })

@@ -44,7 +44,6 @@ impl App for PortDiffViewer {
             Event::SetSelected(ids) => model.set_selected(ids.into_iter().collect()),
         };
 
-        caps.log.info(format!("view: {:?}", model.current_view()));
         caps.render.render();
     }
 
@@ -125,5 +124,14 @@ mod tests {
         let Model::Loaded(LoadedModel { .. }) = &model else {
             panic!("expected loaded model");
         };
+        let ViewModel::Loaded {
+            graph, selected, ..
+        } = app.view(&model)
+        else {
+            panic!("expected loaded view");
+        };
+        dbg!(&graph);
+        dbg!(&selected);
+        assert!(false);
     }
 }

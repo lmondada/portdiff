@@ -137,6 +137,8 @@ impl Graph for pg::PortGraph {
         left: Site<Self::Node, Self::PortLabel>,
         right: Site<Self::Node, Self::PortLabel>,
     ) -> (BoundPort<Self::Edge>, BoundPort<Self::Edge>) {
+        ensure_site_exists(self, left);
+        ensure_site_exists(self, right);
         let (outport, _) = self
             .link_offsets(left.node, left.port, right.node, right.port)
             .unwrap();
@@ -163,17 +165,11 @@ impl Graph for pg::PortGraph {
         graph: &Self,
         nodes: &std::collections::BTreeSet<Self::Node>,
     ) -> std::collections::BTreeMap<Self::Node, Self::Node> {
-        println!("Adding subgraph with {} nodes", nodes.len());
         let mut nodes_map = BTreeMap::new();
-        println!("N nodes in self: {}", self.node_count());
         for node in nodes {
             let new_node = self.add_node(0, 0);
             nodes_map.insert(*node, new_node);
         }
-        println!(
-            "N nodes in self after adding subgraph: {}",
-            self.node_count()
-        );
 
         // Add every port in `graph` to `self`
         for (&node, &self_node) in &nodes_map {
@@ -205,6 +201,22 @@ impl Graph for pg::PortGraph {
             }
         }
         nodes_map
+    }
+}
+
+fn ensure_site_exists(graph: &mut PortGraph, site: Site<pg::NodeIndex, pg::PortOffset>) {
+    let num_inputs = graph.num_inputs(site.node);
+    let num_outputs = graph.num_outputs(site.node);
+
+    let index = site.port.index();
+    match site.port.direction() {
+        pg::Direction::Incoming if index >= num_inputs => {
+            graph.set_num_ports(site.node, index + 1, num_outputs, |_, _| {});
+        }
+        pg::Direction::Outgoing if index >= num_outputs => {
+            graph.set_num_ports(site.node, num_inputs, index + 1, |_, _| {});
+        }
+        _ => {}
     }
 }
 

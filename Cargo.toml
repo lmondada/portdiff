@@ -12,7 +12,7 @@ derive_more = { workspace = true }
 itertools = "0.13.0"
 petgraph = { workspace = true }
 portgraph = { workspace = true, optional = true, features = ["serde"] }
-relrc = { workspace = true, features = ["serde"] }
+relrc = { workspace = true, features = ["serde", "petgraph"] }
 thiserror = "1.0.63"
 uuid = { version = "1.8.0", features = ["v4", "serde"] }
 serde = { workspace = true, features = ["derive"] }

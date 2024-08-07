@@ -1,8 +1,6 @@
-use std::collections::BTreeSet;
-
+use crate::GraphView;
 use itertools::Itertools;
 use petgraph::visit::{EdgeRef, IntoEdges};
-use relrc::GraphView;
 
 use crate::{Graph, PortDiff};
 
@@ -18,7 +16,7 @@ impl<G: Graph> PortDiff<G> {
     {
         let graphs = diffs
             .into_iter()
-            .map(|d| GraphView::from_sinks(vec![d.data.clone()]))
+            .map(|d| GraphView::from_sinks(vec![d.clone()]))
             .collect_vec();
 
         if graphs.is_empty() {
@@ -33,12 +31,13 @@ impl<G: Graph> PortDiff<G> {
                 g1
             })
             .expect("not empty");
+
         // For each node that is an ancestor of two or more graphs...
         for diff_ptr in GraphView::lowest_common_ancestors(&graphs) {
             // Check that its outgoing edges are compatible
             // (this must hold everywhere, but already holds elsewhere as the
             // set of outgoing edges in non-lca nodes remains unchanged).
-            let edges = merged_graph.edges(diff_ptr).collect_vec();
+            let edges = merged_graph.inner().edges(diff_ptr.into()).collect_vec();
             if !EdgeData::are_compatible(edges.iter().map(|e| e.weight())) {
                 return false;
             }
@@ -46,42 +45,26 @@ impl<G: Graph> PortDiff<G> {
         true
     }
 
-    pub fn extract_graph(mut diffs: Vec<PortDiff<G>>) -> Result<G, IncompatiblePortDiff> {
+    pub fn extract_graph(diffs: Vec<PortDiff<G>>) -> Result<G, IncompatiblePortDiff> {
         if !PortDiff::are_compatible(&diffs) {
             return Err(IncompatiblePortDiff);
         }
-        // We repeatedly squash the leaves in `diffs`. When the `diff` no longer
-        // has a parent we can add it to the output.
-        let mut final_diffs = vec![];
-        while let Some(diff) = diffs.pop() {
-            let others = GraphView::from_sinks(diffs.iter().map(|d| d.data.clone()).collect());
-            if others
-                .all_nodes()
-                .contains(&PortDiff::as_ptr(&diff.data.clone().into()).into())
-            {
-                continue;
-            } else if diff.all_parents().next().is_none() {
-                final_diffs.push(diff);
-            } else {
-                diffs.push(diff.squash());
-            }
-        }
-        let mut out_graph = G::default();
-        for diff in final_diffs {
-            let all_nodes = diff.graph.nodes_iter();
-            out_graph.add_subgraph(&diff.graph, &BTreeSet::from_iter(all_nodes));
-        }
-        Ok(out_graph)
+
+        let graph = GraphView::from_sinks(diffs);
+        let diff = PortDiff::squash(&graph);
+        Ok(diff.try_unwrap_graph().unwrap())
     }
 }
 #[cfg(feature = "portgraph")]
 #[cfg(test)]
 mod tests {
+    use portgraph::render::DotFormat;
+    use portgraph::PortView;
     use rstest::rstest;
 
     use crate::port_diff::tests::TestPortDiff;
 
-    use super::super::tests::parent_child_diffs;
+    use super::super::tests::{parent_child_diffs, parent_two_children_diffs};
     use super::*;
 
     #[test]
@@ -126,6 +109,14 @@ mod tests {
             3
         );
         assert!(!PortDiff::are_compatible(&[child_a, child_b]));
+    }
+
+    #[rstest]
+    fn extract_parent_two_children(parent_two_children_diffs: [TestPortDiff; 3]) {
+        let [_, child_1, child_2] = parent_two_children_diffs;
+        let graph = PortDiff::extract_graph(vec![child_1, child_2]).unwrap();
+        assert_eq!(graph.node_count(), 2);
+        insta::assert_snapshot!(graph.dot_string());
     }
 
     // #[rstest]

@@ -1,71 +1,75 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use relrc::RelRc;
+use petgraph::visit::{EdgeRef, IntoEdges};
 
 use crate::{
-    port::{BoundaryIndex, EdgeEnd, Port, Site},
-    Graph, PortDiff,
+    port::{BoundPort, BoundaryIndex, EdgeEnd, Port, Site},
+    Graph, GraphView, NodeId, PortDiff,
 };
 
-use super::{EdgeData, IncomingEdgeIndex, Owned, PortDiffData, PortDiffPtr};
+use super::{EdgeData, IncomingEdgeIndex, Owned, PortDiffData};
 
 impl<G: Graph> PortDiff<G> {
-    /// Squash `self` into its parents, by merging two rewrites into one.
+    /// Squash all diffs in `graph` into a single equivalent diff.
     ///
-    /// The new diff has the grandparents of `self` as parents and extracting
-    /// an output from the new diff is equivalent to extracting a diff from `self`.
-    pub fn squash(&self) -> Self {
-        let mut builder = Builder::new(self.graph.clone());
+    /// The incoming edges of the new diff is the union of the incoming edges into
+    /// `graph`. The new diff has no outgoing edges.
+    ///
+    /// Note: this will panic if the diffs in `graph` are not compatible (the
+    /// public-facing [Self::extract_graph] will check for compatibility first).
+    pub(crate) fn squash(graph: &GraphView<G>) -> Self {
+        let mut builder = Builder::new();
 
-        // For each incoming edge, add the subgraph at the parent (minus the
-        // nodes removed by the rewrite).
-        builder.add_parent_subgraphs(self.all_incoming());
+        // For each diff in `graph`, add the subgraph of the replacement graph
+        // minus the nodes removed by other diffs in `graph`.
+        builder.add_subgraphs(graph);
 
-        builder.flatten_incoming_edges(self.all_parents());
+        builder.flatten_incoming_edges(graph);
 
-        // For each boundary port of `self`, consider the port in one of the parents
-        // it maps to and do one of
-        //  - if parent port is a boundary port, then add to new boundary
-        //  - if parent port is a bound port, then add an edge from the child
-        //    port to the other port it is connected to (either in the parent or child)
-        let mut ports_map = BTreeMap::new();
+        // For each boundary port of a node of `graph`, consider whether the port
+        // can be resolved within `graph` (i.e. there is a non-boundary ancestor
+        // port within `graph`):
+        //  - if so, then store the mapping to the resolved port (we will add an
+        //    edge in the next step)
+        //  - otherwise, add to new boundary.
+        let mut resolved_ports_map = BTreeMap::new();
 
-        for self_index in self.boundary_iter() {
-            match self.parent_port(self_index) {
-                Owned {
-                    data: Port::Boundary(port),
-                    owner,
-                } => {
-                    let site = owner.boundary_site(port).clone();
-                    builder.append_boundary(site, Owned { data: port, owner });
-                }
-                Owned {
-                    data: Port::Bound(port),
-                    owner,
-                } => {
-                    // We delay inserting the new edges until we have traversed
-                    // all boundaries. This makes finding the correct sites for
-                    // for the new edges easier
-                    ports_map.insert(
-                        Owned { data: port, owner },
-                        self.boundary_site(self_index).clone(),
-                    );
+        let all_nodes = graph.all_nodes().collect::<BTreeSet<_>>();
+        for &diff_id in &all_nodes {
+            let diff = graph.get_diff(diff_id);
+            for bd_index in diff.boundary_iter() {
+                match try_resolve_port(Owned::new(bd_index, diff.clone()), &all_nodes) {
+                    Ok(bound_port) => {
+                        let old_site = diff.boundary_site(bd_index);
+                        let new_site = builder
+                            .map_site(Owned::new(old_site.clone(), diff.clone()))
+                            .unwrap();
+                        resolved_ports_map.insert(bound_port, new_site);
+                    }
+                    Err(boundary) => {
+                        let old_site = diff.boundary_site(bd_index);
+                        let new_site = builder
+                            .map_site(Owned::new(old_site.clone(), diff.clone()))
+                            .unwrap();
+                        builder.append_boundary(new_site, boundary);
+                    }
                 }
             }
         }
-        // Insert new edges
-        while let Some((parent_port, new_site)) = ports_map.pop_first() {
+        // For each resolved port, insert new edges
+        while let Some((parent_port, new_site)) = resolved_ports_map.pop_first() {
             let parent_opp_port = parent_port.opposite();
-            let new_opp_site = if let Some(new_opp_site) = ports_map.remove(&parent_opp_port) {
-                // The new edge is between two new sites
-                new_opp_site
-            } else {
-                // Find (old) opposite site by following the edge in parent and
-                // then translating to the new site with `node_map`
-                builder.map_site(parent_opp_port.site()).expect(
+            let new_opp_site =
+                if let Some(new_opp_site) = resolved_ports_map.remove(&parent_opp_port) {
+                    // The new edge is between two new sites
+                    new_opp_site
+                } else {
+                    // Find (old) opposite site by following the edge in parent and
+                    // then translating to the new site with `node_map`
+                    builder.map_site(parent_opp_port.site()).expect(
                     "a parent port was neither a boundary port nor a non-rewritten port in child",
                 )
-            };
+                };
             match parent_port.data.end {
                 EdgeEnd::Left => {
                     builder.graph.link_sites(new_site, new_opp_site);
@@ -76,27 +80,37 @@ impl<G: Graph> PortDiff<G> {
             }
         }
 
-        // Finally add to the boundary the boundary ports of the parents on
-        // non-rewritten nodes
-        for parent in self.all_parents() {
-            for index in parent.boundary_iter() {
-                let site = parent.boundary_site(index).clone();
-                if let Some(new_site) = builder.map_site(Owned {
-                    data: site,
-                    owner: parent.clone(),
-                }) {
-                    builder.append_boundary(
-                        new_site,
-                        Owned {
-                            data: index,
-                            owner: parent.clone(),
-                        },
-                    )
-                }
-            }
-        }
         builder.finish()
     }
+}
+
+/// Find an ancestor port that is not a boundary port within `all_nodes`.
+///
+/// If a bound port could not be found, return the last boundary port that
+/// is still in `all_nodes`, i.e. it's parent is not in `all_nodes`.
+fn try_resolve_port<G: Graph>(
+    mut boundary: Owned<BoundaryIndex, G>,
+    all_nodes: &BTreeSet<NodeId<G>>,
+) -> Result<Owned<BoundPort<G::Edge>, G>, Owned<BoundaryIndex, G>> {
+    let mut port = boundary.owner.parent_port(boundary.data);
+    while all_nodes.contains(&(&port.owner).into()) {
+        match port.data {
+            Port::Bound(data) => {
+                return Ok(Owned {
+                    data,
+                    owner: port.owner,
+                });
+            }
+            Port::Boundary(data) => {
+                boundary = Owned {
+                    data,
+                    owner: port.owner.clone(),
+                };
+                port = port.owner.parent_port(data);
+            }
+        }
+    }
+    Err(boundary)
 }
 
 struct Builder<G: Graph> {
@@ -105,79 +119,61 @@ struct Builder<G: Graph> {
     /// The new incoming edges and their parent
     incoming_edges: Vec<(PortDiff<G>, EdgeData<G>)>,
     /// For each parent, a map from the old edge index to the new edge index
-    edge_index_map: BTreeMap<PortDiffPtr<G>, BTreeMap<IncomingEdgeIndex, IncomingEdgeIndex>>,
+    edge_index_map: BTreeMap<NodeId<G>, BTreeMap<IncomingEdgeIndex, IncomingEdgeIndex>>,
     /// For each parent, a map from the old node to the new node
-    nodes_map: BTreeMap<PortDiffPtr<G>, BTreeMap<G::Node, G::Node>>,
+    nodes_map: BTreeMap<NodeId<G>, BTreeMap<G::Node, G::Node>>,
     /// The new replacement graph
     graph: G,
 }
 
 impl<G: Graph> Builder<G> {
-    fn new(graph: G) -> Self {
+    fn new() -> Self {
         Self {
             boundary: vec![],
             incoming_edges: vec![],
             edge_index_map: BTreeMap::new(),
             nodes_map: BTreeMap::new(),
-            graph,
+            graph: G::default(),
         }
     }
 
-    /// For the source nodes of `all_incoming`, add the subgraphs of the non-rewritten
-    /// nodes.
+    /// Add the subgraphs of the replacement graphs that are not rewritten within `graph`.
     ///
-    /// For each parent node, return a map from nodes in the parent graph to nodes
-    /// in `graph`.
-    fn add_parent_subgraphs<'a>(
-        &mut self,
-        all_incoming: impl IntoIterator<
-            Item = &'a relrc::edge::InnerEdgeData<PortDiffData<G>, EdgeData<G>>,
-        >,
-    ) where
-        G: 'a,
-    {
-        // The list of unique parents
-        let mut parents = vec![];
-        // Map parent pointers to the set of nodes to keep (i.e. nodes not
-        // in any of the edges to `self`)
-        let mut parents_nodes = BTreeMap::new();
-
-        for edge in all_incoming {
-            let parent = edge.source();
-            let parent_ptr = RelRc::as_ptr(parent);
-            if !parents_nodes.contains_key(&parent_ptr) {
-                parents_nodes.insert(
-                    parent_ptr,
-                    parent.value().graph.nodes_iter().collect::<BTreeSet<_>>(),
-                );
-                parents.push(parent);
+    /// For each node in `graph`, store a map from nodes in the old graph to nodes
+    /// in the new graph.
+    fn add_subgraphs(&mut self, graph: &GraphView<G>) {
+        for diff_id in graph.all_nodes() {
+            let diff = graph.get_diff(diff_id);
+            let mut nodes = diff.graph.nodes_iter().collect::<BTreeSet<_>>();
+            for edge in graph.inner().edges(diff_id.into()) {
+                for n in edge.weight().subgraph.nodes() {
+                    if !nodes.remove(&n) {
+                        panic!("found incompatible diffs in GraphView");
+                    }
+                }
             }
-            let parents_nodes = parents_nodes.get_mut(&parent_ptr).unwrap();
-            for node in edge.value().subgraph.nodes() {
-                parents_nodes.remove(&node);
-            }
-        }
-
-        for parent in parents {
-            let nodes = &parents_nodes[&RelRc::as_ptr(&parent)];
-            let nodes_map = self.graph.add_subgraph(&parent.value().graph, nodes);
-            self.nodes_map.insert(RelRc::as_ptr(&parent), nodes_map);
+            let nodes_map = self.graph.add_subgraph(&diff.graph, &nodes);
+            self.nodes_map.insert(diff_id, nodes_map);
         }
     }
 
-    /// Flatten the incoming edges of the `diffs` into a single list of edges.
+    /// Collect all incoming edges into `graph` and flatten into a single list of edges.
     ///
     /// Store a map from the old edge indices to the new edge indices.
-    fn flatten_incoming_edges<'a>(&mut self, diffs: impl IntoIterator<Item = PortDiff<G>>)
-    where
-        G: 'a,
-    {
-        for diff in diffs {
+    fn flatten_incoming_edges(&mut self, graph: &GraphView<G>) {
+        let all_nodes = graph.all_nodes().collect::<BTreeSet<_>>();
+        for &diff_id in &all_nodes {
             let mut edge_index_map = BTreeMap::new();
+            let diff = graph.get_diff(diff_id);
             for (index, edge) in diff.all_incoming().iter().enumerate() {
+                let edge_source: PortDiff<G> = edge.source().clone().into();
+                if all_nodes.contains(&(&edge_source).into()) {
+                    // internal edge
+                    continue;
+                }
                 let new_index = self.incoming_edges.len();
                 self.incoming_edges.push((
-                    edge.source().clone().into(),
+                    edge_source,
                     EdgeData {
                         subgraph: edge.value().subgraph.clone(),
                         port_map: Default::default(),
@@ -185,8 +181,7 @@ impl<G: Graph> Builder<G> {
                 ));
                 edge_index_map.insert(IncomingEdgeIndex(index), IncomingEdgeIndex(new_index));
             }
-            self.edge_index_map
-                .insert(PortDiff::as_ptr(&diff), edge_index_map);
+            self.edge_index_map.insert(diff_id, edge_index_map);
         }
     }
 
@@ -199,7 +194,7 @@ impl<G: Graph> Builder<G> {
     ) {
         let Owned { data: port, owner } = port;
         let edge_index = owner.incoming_edge_index(port).unwrap();
-        let new_edge_index = self.edge_index_map[&PortDiff::as_ptr(&owner)][&edge_index];
+        let new_edge_index = self.edge_index_map[&(&owner).into()][&edge_index];
 
         // Add to boundary
         self.boundary.push((site, new_edge_index));
@@ -216,12 +211,7 @@ impl<G: Graph> Builder<G> {
         site: Owned<Site<G::Node, G::PortLabel>, G>,
     ) -> Option<Site<G::Node, G::PortLabel>> {
         let Owned { data: site, owner } = site;
-        site.filter_map_node(|n| {
-            self.nodes_map
-                .get(&PortDiff::as_ptr(&owner))?
-                .get(&n)
-                .copied()
-        })
+        site.filter_map_node(|n| self.nodes_map.get(&(&owner).into())?.get(&n).copied())
     }
 
     fn finish(self) -> PortDiff<G> {

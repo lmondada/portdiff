@@ -175,6 +175,13 @@ impl<G: Graph> PortDiff<G> {
         &self.graph
     }
 
+    pub fn try_unwrap_graph(self) -> Result<G, Self> {
+        match RelRc::try_unwrap(self.data) {
+            Ok(data) => Ok(data.graph),
+            Err(data) => Err(PortDiff { data }),
+        }
+    }
+
     /// The i-th incoming edge
     fn incoming(&self, index: IncomingEdgeIndex) -> Option<&InEdge<G>> {
         self.data.incoming(index.0)
@@ -197,9 +204,9 @@ impl<G: Graph> PortDiff<G> {
         self.data.all_incoming()
     }
 
-    fn all_parents(&self) -> impl Iterator<Item = Self> + '_ {
-        self.data.all_parents().map(|p| p.clone().into()).unique()
-    }
+    // fn all_parents(&self) -> impl Iterator<Item = Self> + '_ {
+    //     self.data.all_parents().map(|p| p.clone().into()).unique()
+    // }
 
     /// All outgoing edges.
     fn all_outgoing(&self) -> Vec<OutEdge<G>> {

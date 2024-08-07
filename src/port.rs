@@ -25,7 +25,7 @@ impl EdgeEnd {
 ///
 /// Uniquely given by a node and a port label. There may be 0, 1 or multiple
 /// ports at the same site.
-#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Site<N, P> {
     /// The node
     pub node: N,
