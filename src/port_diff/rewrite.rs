@@ -421,9 +421,10 @@ mod tests {
 
         // Now rewrite across child_a and child_b
         let mut rhs = PortGraph::new();
-        let n0 = rhs.add_node(0, 1);
-        let n1 = rhs.add_node(1, 0);
+        let n0 = rhs.add_node(0, 2);
+        let n1 = rhs.add_node(2, 0);
         rhs.link_nodes(n0, 0, n1, 0).unwrap();
+        rhs.link_nodes(n0, 1, n1, 1).unwrap();
 
         let child_a_out0 = child_a
             .boundary_iter()

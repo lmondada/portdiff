@@ -51,18 +51,18 @@ impl LoadedModel {
 
 impl Model {
     /// Extract the current graph given by the selected diffs
-    pub fn current_view(&self) -> ViewModel {
+    pub fn current_view(&self) -> Result<ViewModel, IncompatiblePortDiff> {
         match self {
-            Model::None => ViewModel::None,
+            Model::None => Ok(ViewModel::None),
             Model::Loaded(model) => {
-                let graph = RFGraph::from(&model.extract_graph().unwrap());
+                let graph = RFGraph::from(&model.extract_graph()?);
                 let selected = model.selected_diffs.clone();
                 let hierarchy = model.hierarchy().collect();
-                ViewModel::Loaded {
+                Ok(ViewModel::Loaded {
                     graph,
                     selected,
                     hierarchy,
-                }
+                })
             }
         }
     }

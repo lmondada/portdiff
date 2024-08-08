@@ -48,7 +48,7 @@ impl App for PortDiffViewer {
     }
 
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
-        model.current_view()
+        model.current_view().unwrap()
     }
 }
 
@@ -112,6 +112,7 @@ mod tests {
     #[rstest]
     #[case("parent_child.json")]
     #[case("parent_two_children.json")]
+    #[case("parent_two_children_overlapping.json")]
     fn test_app_load_many(#[case] file_name: &str) {
         let app = AppTester::<PortDiffViewer, _>::default();
         let mut model = Model::None;
@@ -124,14 +125,8 @@ mod tests {
         let Model::Loaded(LoadedModel { .. }) = &model else {
             panic!("expected loaded model");
         };
-        let ViewModel::Loaded {
-            graph, selected, ..
-        } = app.view(&model)
-        else {
+        let ViewModel::Loaded { .. } = app.view(&model) else {
             panic!("expected loaded view");
         };
-        dbg!(&graph);
-        dbg!(&selected);
-        assert!(false);
     }
 }

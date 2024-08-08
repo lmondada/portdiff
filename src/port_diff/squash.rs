@@ -38,6 +38,9 @@ impl<G: Graph> PortDiff<G> {
         for &diff_id in &all_nodes {
             let diff = graph.get_diff(diff_id);
             for bd_index in diff.boundary_iter() {
+                if !builder.contains(Owned::new(diff.boundary_site(bd_index).node, diff.clone())) {
+                    continue;
+                }
                 match try_resolve_port(Owned::new(bd_index, diff.clone()), &all_nodes) {
                     Ok(bound_port) => {
                         let old_site = diff.boundary_site(bd_index);
@@ -222,5 +225,13 @@ impl<G: Graph> Builder<G> {
             },
             self.incoming_edges,
         )
+    }
+
+    /// Whether `node` is also in the new replacement graph.
+    fn contains(&self, node: Owned<G::Node, G>) -> bool {
+        let Some(diff_nodes) = self.nodes_map.get(&(&node.owner).into()) else {
+            return false;
+        };
+        diff_nodes.contains_key(&node.data)
     }
 }
