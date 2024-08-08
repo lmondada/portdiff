@@ -4,7 +4,8 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
-import "@/app/node_types.css";
+import "@/styles/node_types.css";
+import "@/styles/globals.css";
 
 import init_core from "shared/shared";
 import {
