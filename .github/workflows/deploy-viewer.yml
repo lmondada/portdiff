@@ -77,6 +77,10 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Build shared_types
+        run: |
+          cd ../shared_types && cargo build
+
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} build
       - name: Upload artifact
