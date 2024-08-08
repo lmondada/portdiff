@@ -44,6 +44,18 @@ impl App for PortDiffViewer {
             Event::SetSelected(ids) => model.set_selected(ids.into_iter().collect()),
         };
 
+        let mut n_trimmed = 0;
+        while !model.are_compatible() {
+            model.trim_selected(1);
+            n_trimmed += 1;
+        }
+        if n_trimmed > 0 {
+            caps.log.error(format!(
+                "Incompatible diffs. Trimmed {} incompatible diffs",
+                n_trimmed
+            ));
+        }
+
         caps.render.render();
     }
 
@@ -117,7 +129,6 @@ mod tests {
         let app = AppTester::<PortDiffViewer, _>::default();
         let mut model = Model::None;
         let file_path = format!("../../test_files/{}", file_name);
-        dbg!(&file_path);
         app.update(
             Event::DeserializeData(std::fs::read_to_string(&file_path).unwrap()),
             &mut model,

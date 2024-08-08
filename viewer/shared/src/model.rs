@@ -94,6 +94,28 @@ impl Model {
     pub fn clear(&mut self) {
         *self = Model::None;
     }
+
+    pub(crate) fn are_compatible(&self) -> bool {
+        let Self::Loaded(model) = self else {
+            return true;
+        };
+        let node_ids = model
+            .selected_diffs
+            .iter()
+            .map(|diff| model.diff_id_to_ptr[diff.0 as usize]);
+        let diffs: Vec<_> = node_ids.map(|n| model.all_diffs.get_diff(n)).collect();
+        PortDiff::are_compatible(&diffs)
+    }
+
+    /// Remove the first `n` elements from the selected diffs
+    pub(crate) fn trim_selected(&mut self, n: usize) {
+        let Model::Loaded(model) = self else {
+            return;
+        };
+        for _ in 0..n {
+            model.selected_diffs.pop_first();
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
