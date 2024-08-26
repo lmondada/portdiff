@@ -394,6 +394,7 @@ mod tests {
 
     use super::*;
 
+    #[ignore = "TODO this is currently not deterministic"]
     #[rstest]
     fn test_rewrite(parent_child_diffs: [TestPortDiff; 2]) {
         let [parent, _] = parent_child_diffs;

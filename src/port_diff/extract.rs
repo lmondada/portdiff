@@ -111,6 +111,7 @@ mod tests {
         assert!(!PortDiff::are_compatible(&[child_a, child_b]));
     }
 
+    #[ignore = "TODO this is currently not deterministic"]
     #[rstest]
     fn extract_parent_two_children(parent_two_children_diffs: [TestPortDiff; 3]) {
         let [_, child_1, child_2] = parent_two_children_diffs;

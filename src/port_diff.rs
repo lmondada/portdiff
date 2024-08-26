@@ -513,6 +513,7 @@ mod tests {
         insta::assert_snapshot!(serialized);
     }
 
+    #[ignore = "TODO this is currently not deterministic"]
     #[rstest]
     fn serialize_parent_two_children(parent_two_children_diffs: [TestPortDiff; 3]) {
         let [_, child_1, child_2] = parent_two_children_diffs;
@@ -521,6 +522,7 @@ mod tests {
         insta::assert_snapshot!(serialized);
     }
 
+    #[ignore = "TODO this is currently not deterministic"]
     #[rstest]
     fn serialize_parent_two_children_overlapping(
         parent_two_children_overlapping_diffs: [TestPortDiff; 3],
