@@ -264,7 +264,7 @@ impl<G: Graph> PortDiff<G> {
         parent_port.owner.descendants(parent_port.data.opposite())
     }
 
-    fn boundary_iter(&self) -> impl Iterator<Item = BoundaryIndex> {
+    pub fn boundary_iter(&self) -> impl Iterator<Item = BoundaryIndex> {
         (0..self.boundary.len()).map_into()
     }
 
@@ -335,6 +335,7 @@ impl<G: Graph> PortDiff<G> {
 #[derive_where(Hash; G: Graph, D: Hash)]
 #[derive_where(PartialOrd; G: Graph, D: PartialOrd)]
 #[derive_where(Ord; G: Graph, D: Ord)]
+#[derive_where(Debug; G: Graph, D: Debug)]
 pub struct Owned<D, G: Graph> {
     pub data: D,
     pub owner: PortDiff<G>,
