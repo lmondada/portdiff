@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2024-08-27
+
 ### Added
 - Expose `BoundPort`, `EdgeEnd`, `Port` and `Site` to public API
 - Expose `PortDiff::boundary_iter`
@@ -24,5 +26,6 @@ Initial release
 - Serialization and deserialization support
 - Web viewer for PortDiff graphs using Next.js and React
 
-[Unreleased]: https://github.com/lmondada/portdiff/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/lmondada/portdiff/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/lmondada/portdiff/releases/tag/v0.1.1
 [0.1.0]: https://github.com/lmondada/portdiff/releases/tag/v0.1.0
