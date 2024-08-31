@@ -52,7 +52,7 @@ pub trait Graph: Default + Clone {
         &mut self,
         left: Site<Self::Node, Self::PortLabel>,
         right: Site<Self::Node, Self::PortLabel>,
-    ) -> (BoundPort<Self::Edge>, BoundPort<Self::Edge>);
+    );
 
     /// Add a subgraph of `graph` to `self`.
     ///

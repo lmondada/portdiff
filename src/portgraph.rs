@@ -136,28 +136,11 @@ impl Graph for pg::PortGraph {
         &mut self,
         left: Site<Self::Node, Self::PortLabel>,
         right: Site<Self::Node, Self::PortLabel>,
-    ) -> (BoundPort<Self::Edge>, BoundPort<Self::Edge>) {
+    ) {
         ensure_site_exists(self, left);
         ensure_site_exists(self, right);
-        let (outport, _) = self
-            .link_offsets(left.node, left.port, right.node, right.port)
+        self.link_offsets(left.node, left.port, right.node, right.port)
             .unwrap();
-        let edge = (
-            self.port_node(outport).unwrap(),
-            self.port_offset(outport).unwrap(),
-        )
-            .try_into()
-            .unwrap();
-        (
-            BoundPort {
-                edge,
-                end: EdgeEnd::Left,
-            },
-            BoundPort {
-                edge,
-                end: EdgeEnd::Right,
-            },
-        )
     }
 
     fn add_subgraph(

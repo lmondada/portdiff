@@ -10,4 +10,4 @@ pub mod portgraph;
 pub use graph::Graph;
 pub use graph_view::{GraphView, NodeId};
 pub use port::{BoundPort, EdgeEnd, Port, Site};
-pub use port_diff::PortDiff;
+pub use port_diff::{InvalidRewriteError, PortDiff};

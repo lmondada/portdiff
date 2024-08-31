@@ -5,6 +5,7 @@ mod squash;
 // mod traverser;
 
 pub use extract::IncompatiblePortDiff;
+pub use rewrite::InvalidRewriteError;
 
 use std::{
     cmp,
@@ -48,7 +49,7 @@ impl<G: Graph> PortDiff<G> {
         }
     }
 
-    pub(crate) fn as_ptr(&self) -> PortDiffPtr<G> {
+    pub fn as_ptr(&self) -> PortDiffPtr<G> {
         RelRc::as_ptr(&self.data)
     }
 }
@@ -286,7 +287,7 @@ impl<G: Graph> PortDiff<G> {
             data: Port::from(port),
             owner: self.clone(),
         }];
-        let mut all_ports = curr_ports.clone();
+        let mut all_ports = Vec::new();
         while let Some(port) = curr_ports.pop() {
             all_ports.push(port.clone());
             curr_ports.extend(port.owner.all_outgoing().iter().filter_map(|e| {
