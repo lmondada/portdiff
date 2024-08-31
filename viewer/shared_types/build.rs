@@ -1,5 +1,5 @@
 use crux_core::typegen::TypeGen;
-use shared::PortDiffViewer;
+use shared::{PortDiffViewer, RFEdge, RFGraph, RFNode};
 use std::path::PathBuf;
 
 fn main() -> anyhow::Result<()> {
@@ -8,6 +8,10 @@ fn main() -> anyhow::Result<()> {
     let mut gen = TypeGen::new();
 
     gen.register_app::<PortDiffViewer>()?;
+
+    gen.register_type::<RFGraph>()?;
+    gen.register_type::<RFNode>()?;
+    gen.register_type::<RFEdge>()?;
 
     let output_root = PathBuf::from("./generated");
 

@@ -5,8 +5,7 @@ mod supported_formats;
 
 pub use supported_formats::SupportedGraphViews;
 
-#[cfg(test)]
-pub(crate) use portgraph::RFGraph;
+pub use portgraph::{RFEdge, RFGraph, RFNode};
 
 pub trait ViewSerialise {
     /// The type of graph this object serialises to

@@ -10,6 +10,8 @@ pub use crux_core::{bridge::Bridge, Core, Request};
 
 pub use app::*;
 
+pub use view_serialise::{RFEdge, RFGraph, RFNode};
+
 use model::{Model, ViewModel};
 
 // TODO hide this plumbing

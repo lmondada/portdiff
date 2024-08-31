@@ -5,10 +5,11 @@ import PortDiffViewer from "./PortDiffViewer";
 import DragDivider from "./DragDivider";
 import HierarchyViewer from "./HierarchyViewer";
 
-import { HierarchyEdge, RFGraph } from "shared_types/types/shared_types";
+import { HierarchyEdge } from "shared_types/types/shared_types";
 
 interface MainViewProps {
-  graph: RFGraph;
+  graph: string;
+  graphType: "portgraph";
   hierarchy: HierarchyEdge[];
   selected: number[];
   setSelected: (selected: number[]) => void;
@@ -16,11 +17,16 @@ interface MainViewProps {
 
 const MainView: React.FC<MainViewProps> = ({
   graph,
+  graphType,
   hierarchy,
   selected,
   setSelected,
 }) => {
   const [widthPercentage, setWidthPercentage] = useState(70);
+
+  if (graphType !== "portgraph") {
+    throw new Error("Graph type is not portgraph");
+  }
 
   return (
     <div style={{ display: "flex", width: "100vw", height: "100vh" }}>

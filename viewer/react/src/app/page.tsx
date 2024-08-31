@@ -39,7 +39,7 @@ const Home: NextPage = () => {
         initialized.current = true;
 
         init_core().then(() => {
-          update(new EventVariantDeserializeData(""), callbacks);
+          update(new EventVariantDeserializeData("", "portgraph"), callbacks);
         });
       }
     },
@@ -48,8 +48,8 @@ const Home: NextPage = () => {
   );
 
   const loadData = useCallback(
-    (data: string) => {
-      update(new EventVariantDeserializeData(data), callbacks);
+    (data: string, format: "portgraph") => {
+      update(new EventVariantDeserializeData(data, format), callbacks);
     },
     [callbacks]
   );
@@ -63,6 +63,9 @@ const Home: NextPage = () => {
   );
 
   if (view instanceof ViewModelVariantLoaded) {
+    if (view.graph_type !== "portgraph") {
+      throw new Error("Graph type is not portgraph");
+    }
     console.log("hierarchy at main", view.hierarchy);
     console.log("selected at main", view.selected);
   }
@@ -77,6 +80,7 @@ const Home: NextPage = () => {
         {view instanceof ViewModelVariantLoaded ? (
           <MainView
             graph={view.graph}
+            graphType={view.graph_type as "portgraph"}
             hierarchy={view.hierarchy}
             selected={view.selected}
             setSelected={setSelected}

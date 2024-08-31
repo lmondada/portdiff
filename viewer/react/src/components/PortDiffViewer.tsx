@@ -5,13 +5,13 @@ import {
   SelectionMode,
 } from "@xyflow/react";
 
-import { RFGraph } from "shared_types/types/shared_types";
 import { useMemo } from "react";
 import placeGraph from "@/app/place_graph";
 import PortDiffNode from "./PortDiffNode";
+import { RFGraph } from "shared_types/types/shared_types";
 
 type PortDiffViewerProps = {
-  graph: RFGraph;
+  graph: string;
 };
 function PortDiffViewer({ graph }: PortDiffViewerProps) {
   // const onNodesChangeSelectOnly = useCallback(
@@ -49,7 +49,22 @@ function PortDiffViewer({ graph }: PortDiffViewerProps) {
     color: "#333",
   };
 
-  const { nodes, edges } = useMemo(() => placeGraph(graph), [graph]);
+  const parsedGraph = useMemo(() => {
+    try {
+      return JSON.parse(graph) as RFGraph;
+    } catch (error) {
+      console.error("Failed to parse graph:", error);
+      return null;
+    }
+  }, [graph]);
+
+  const { nodes, edges } = useMemo(() => {
+    if (parsedGraph) {
+      return placeGraph(parsedGraph);
+    } else {
+      return { nodes: [], edges: [] };
+    }
+  }, [parsedGraph]);
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
