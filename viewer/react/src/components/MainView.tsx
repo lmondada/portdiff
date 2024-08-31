@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-import PortDiffViewer from "./PortDiffViewer";
+import PortDiffViewer from "./PortgraphViewer";
+import CircuitViewer from "./CircuitViewer";
 
 import DragDivider from "./DragDivider";
 import HierarchyViewer from "./HierarchyViewer";
@@ -9,7 +10,7 @@ import { HierarchyEdge } from "shared_types/types/shared_types";
 
 interface MainViewProps {
   graph: string;
-  graphType: "portgraph";
+  graphType: "portgraph" | "circuit";
   hierarchy: HierarchyEdge[];
   selected: number[];
   setSelected: (selected: number[]) => void;
@@ -24,14 +25,21 @@ const MainView: React.FC<MainViewProps> = ({
 }) => {
   const [widthPercentage, setWidthPercentage] = useState(70);
 
-  if (graphType !== "portgraph") {
-    throw new Error("Graph type is not portgraph");
-  }
+  const renderGraph = () => {
+    switch (graphType) {
+      case "portgraph":
+        return <PortDiffViewer graph={graph} />;
+      case "circuit":
+        return <CircuitViewer graph={graph} />;
+      default:
+        throw new Error(`Unsupported graph type: ${graphType}`);
+    }
+  };
 
   return (
     <div style={{ display: "flex", width: "100vw", height: "100vh" }}>
       <div style={{ width: `${widthPercentage - 2}%`, height: "100%" }}>
-        <PortDiffViewer graph={graph} />
+        {renderGraph()}
       </div>
       <DragDivider
         widthPercentage={widthPercentage}

@@ -80,7 +80,7 @@ const Home: NextPage = () => {
         {view instanceof ViewModelVariantLoaded ? (
           <MainView
             graph={view.graph}
-            graphType={view.graph_type as "portgraph"}
+            graphType={view.graph_type as "portgraph" | "circuit"}
             hierarchy={view.hierarchy}
             selected={view.selected}
             setSelected={setSelected}

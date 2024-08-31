@@ -7,7 +7,7 @@ import {
 
 import { useMemo } from "react";
 import placeGraph from "@/app/place_graph";
-import PortDiffNode from "./PortDiffNode";
+import PortDiffNode from "./PortgraphNode";
 import { RFGraph } from "shared_types/types/shared_types";
 
 type PortDiffViewerProps = {
