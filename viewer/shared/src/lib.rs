@@ -1,7 +1,7 @@
 pub mod app;
 pub mod capability;
 mod model;
-mod rfgraph;
+mod view_serialise;
 
 use lazy_static::lazy_static;
 use wasm_bindgen::prelude::wasm_bindgen;
