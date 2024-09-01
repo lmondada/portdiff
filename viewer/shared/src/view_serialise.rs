@@ -2,6 +2,7 @@
 
 mod portgraph;
 mod supported_formats;
+mod tket;
 
 pub use supported_formats::SupportedGraphViews;
 

@@ -19,7 +19,7 @@ use crate::{
 pub struct GraphView<G: Graph>(relrc::GraphView<PortDiffData<G>, EdgeData<G>>);
 
 /// A handle to a node in a graph view.
-#[derive(From, Into)]
+#[derive(Debug, From, Into)]
 #[derive_where(Clone, Copy, PartialEq, Eq, PartialOrd, Ord; G: Graph)]
 pub struct NodeId<G: Graph>(relrc::NodeId<PortDiffData<G>, EdgeData<G>>);
 

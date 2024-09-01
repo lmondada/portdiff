@@ -1,16 +1,17 @@
 import { useState } from "react";
 
-import PortDiffViewer from "./PortgraphViewer";
+import PortgraphViewer from "./PortgraphViewer";
 import CircuitViewer from "./CircuitViewer";
 
 import DragDivider from "./DragDivider";
 import HierarchyViewer from "./HierarchyViewer";
 
 import { HierarchyEdge } from "shared_types/types/shared_types";
+import { GraphFormat } from "./LoadView";
 
 interface MainViewProps {
   graph: string;
-  graphType: "portgraph" | "circuit";
+  graphType: GraphFormat;
   hierarchy: HierarchyEdge[];
   selected: number[];
   setSelected: (selected: number[]) => void;
@@ -28,8 +29,8 @@ const MainView: React.FC<MainViewProps> = ({
   const renderGraph = () => {
     switch (graphType) {
       case "portgraph":
-        return <PortDiffViewer graph={graph} />;
-      case "circuit":
+        return <PortgraphViewer graph={graph} />;
+      case "tket":
         return <CircuitViewer graph={graph} />;
       default:
         throw new Error(`Unsupported graph type: ${graphType}`);

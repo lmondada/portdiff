@@ -7,13 +7,13 @@ import {
 
 import { useMemo } from "react";
 import placeGraph from "@/app/place_graph";
-import PortDiffNode from "./PortgraphNode";
+import PortgraphNode from "./PortgraphNode";
 import { RFGraph } from "shared_types/types/shared_types";
 
-type PortDiffViewerProps = {
+type PortgraphViewerProps = {
   graph: string;
 };
-function PortDiffViewer({ graph }: PortDiffViewerProps) {
+function PortgraphViewer({ graph }: PortgraphViewerProps) {
   // const onNodesChangeSelectOnly = useCallback(
   //   (changes: NodeChange[]) => {
   //     const selectChanges = changes.filter(
@@ -82,7 +82,7 @@ function PortDiffViewer({ graph }: PortDiffViewerProps) {
 }
 
 const nodeTypes = {
-  custom: PortDiffNode,
+  custom: PortgraphNode,
 };
 
-export default PortDiffViewer;
+export default PortgraphViewer;

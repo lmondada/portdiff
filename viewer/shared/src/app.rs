@@ -3,6 +3,7 @@ use derive_more::{From, Into};
 use portdiff::GraphView;
 use portgraph::PortGraph;
 use serde::{Deserialize, Serialize};
+use tket2::static_circ::StaticSizeCircuit;
 
 use crate::{capability::LogCapability, Model, ViewModel};
 
@@ -44,6 +45,13 @@ impl App for PortDiffViewer {
                         model.clear()
                     }
                 },
+                "tket" => match serde_json::from_str::<GraphView<StaticSizeCircuit>>(&data) {
+                    Ok(diffs) => model.load(diffs),
+                    Err(err) => {
+                        caps.log.error(format!("{:?}", err));
+                        model.clear()
+                    }
+                },
                 _ => {
                     caps.log.error(format!("Unsupported format: {}", format));
                 }
@@ -67,7 +75,12 @@ impl App for PortDiffViewer {
     }
 
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
-        model.current_view().unwrap()
+        model.current_view().unwrap_or(ViewModel::Loaded {
+            graph: "error".to_string(),
+            graph_type: "tket",
+            hierarchy: vec![],
+            selected: Default::default(),
+        })
     }
 }
 
@@ -156,6 +169,31 @@ mod tests {
         let Model::Portgraph(LoadedModel { .. }) = &model else {
             panic!("expected loaded model");
         };
+        let ViewModel::Loaded { .. } = app.view(&model) else {
+            panic!("expected loaded view");
+        };
+    }
+
+    #[rstest]
+    #[case("circ_rewrite.json")]
+    fn test_app_load_circuit(#[case] file_name: &str) {
+        let app = AppTester::<PortDiffViewer, _>::default();
+        let mut model = Model::None;
+        let file_path = format!("../../test_files/{}", file_name);
+        let updates = app.update(
+            Event::DeserializeData {
+                data: std::fs::read_to_string(&file_path).unwrap(),
+                format: "tket".to_string(),
+            },
+            &mut model,
+        );
+        let Model::Tket(inner) = &model else {
+            panic!("expected loaded model");
+        };
+        let ViewModel::Loaded { .. } = app.view(&model) else {
+            panic!("expected loaded view");
+        };
+        model.set_selected(BTreeSet::from([DiffId(0)]));
         let ViewModel::Loaded { .. } = app.view(&model) else {
             panic!("expected loaded view");
         };

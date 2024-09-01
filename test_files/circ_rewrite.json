@@ -1,0 +1,3920 @@
+{
+  "sources": [
+    0
+  ],
+  "sinks": [
+    13,
+    9,
+    2,
+    10,
+    6,
+    8,
+    5,
+    14,
+    4,
+    3,
+    7,
+    1,
+    11,
+    12
+  ],
+  "all_nodes": [
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "Tdg"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "H",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "H",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "H",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "H",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "Tdg"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "H",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "H",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "H",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "H",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "Tdg"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "H",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "H",
+              "CX",
+              "CX",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "H",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "H"
+            ],
+            [
+              "H",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "CX",
+              "T",
+              "CX",
+              "Tdg",
+              "H"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": []
+      },
+      "incoming": []
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 2,
+                    "op_idx": 16
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 2,
+                    "op_idx": 17
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 2,
+                      "op_idx": 16
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 15
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 16
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 5,
+                          "op_idx": 39
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 6,
+                          "op_idx": 50
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 0,
+                    "op_idx": 6
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 0,
+                    "op_idx": 7
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 0,
+                      "op_idx": 6
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 5
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 6
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 1,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 5,
+                          "op_idx": 34
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 0,
+                    "op_idx": 6
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 0,
+                    "op_idx": 7
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 0,
+                      "op_idx": 6
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 5
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 6
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 1,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 5,
+                          "op_idx": 34
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 0,
+                    "op_idx": 1
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 0,
+                    "op_idx": 2
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 0,
+                      "op_idx": 1
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 0
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 1
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 2
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 0,
+                          "op_idx": 2
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 1,
+                          "op_idx": 1
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 5,
+                          "op_idx": 12
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 11
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 12
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 3,
+                      "op_idx": 11
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 10
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 11
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 12
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 12
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 6,
+                          "op_idx": 31
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 36
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 2,
+                    "op_idx": 16
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 2,
+                    "op_idx": 17
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 2,
+                      "op_idx": 16
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 15
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 16
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 5,
+                          "op_idx": 39
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 6,
+                          "op_idx": 50
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 2,
+                    "op_idx": 11
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 2,
+                    "op_idx": 12
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 2,
+                      "op_idx": 11
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 10
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 11
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 12
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 2,
+                          "op_idx": 12
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 5,
+                          "op_idx": 23
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 6,
+                          "op_idx": 42
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 16
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 17
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 3,
+                      "op_idx": 16
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 15
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 16
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 6,
+                          "op_idx": 55
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 44
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 11
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 12
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 3,
+                      "op_idx": 11
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 10
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 11
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 12
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 12
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 6,
+                          "op_idx": 31
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 36
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 16
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 3,
+                    "op_idx": 17
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 3,
+                      "op_idx": 16
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 15
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 16
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 3,
+                          "op_idx": 17
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 6,
+                          "op_idx": 55
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 44
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 6
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 7
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 4,
+                      "op_idx": 6
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 5
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 6
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 25
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 8,
+                          "op_idx": 14
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 6
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 7
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 4,
+                      "op_idx": 6
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 5
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 6
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 7
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 25
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 8,
+                          "op_idx": 14
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 2,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 1
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 2
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 4,
+                      "op_idx": 1
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 0
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 1
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 2
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 2
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 1
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 8,
+                          "op_idx": 6
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "value": {
+        "graph": {
+          "qubit_ops": [
+            [
+              "CX",
+              "CX",
+              "CX"
+            ],
+            [
+              "CX"
+            ],
+            [
+              "CX",
+              "CX"
+            ]
+          ],
+          "qubit_join_map": {}
+        },
+        "boundary": [
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 1,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Outgoing": 0
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 2
+                }
+              },
+              "port": {
+                "Outgoing": 1
+              }
+            },
+            0
+          ],
+          [
+            {
+              "node": {
+                "loc": {
+                  "qubit": 0,
+                  "op_idx": 0
+                }
+              },
+              "port": {
+                "Incoming": 1
+              }
+            },
+            0
+          ]
+        ]
+      },
+      "incoming": [
+        {
+          "source": 0,
+          "value": {
+            "subgraph": {
+              "nodes": [
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 1
+                  }
+                },
+                {
+                  "loc": {
+                    "qubit": 4,
+                    "op_idx": 2
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "src_loc": {
+                    "loc": {
+                      "qubit": 4,
+                      "op_idx": 1
+                    }
+                  },
+                  "out_port": {
+                    "index": 0
+                  }
+                }
+              ]
+            },
+            "port_map": [
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 0
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                0
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 1
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                1
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 2
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                3
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 4,
+                          "op_idx": 2
+                        }
+                      },
+                      "out_port": {
+                        "index": 1
+                      }
+                    },
+                    "end": "Left"
+                  }
+                },
+                4
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 7,
+                          "op_idx": 1
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                5
+              ],
+              [
+                {
+                  "Bound": {
+                    "edge": {
+                      "src_loc": {
+                        "loc": {
+                          "qubit": 8,
+                          "op_idx": 6
+                        }
+                      },
+                      "out_port": {
+                        "index": 0
+                      }
+                    },
+                    "end": "Right"
+                  }
+                },
+                2
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

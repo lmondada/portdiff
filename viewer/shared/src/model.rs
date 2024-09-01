@@ -5,6 +5,7 @@ use petgraph::visit::{EdgeRef, IntoEdgeReferences};
 use portdiff::{self as pd, port_diff::IncompatiblePortDiff, GraphView, NodeId, PortDiff};
 use portgraph::PortGraph;
 use serde::{Deserialize, Serialize};
+use tket2::static_circ::StaticSizeCircuit;
 
 use crate::{
     view_serialise::{SupportedGraphViews, ViewSerialise},
@@ -19,6 +20,17 @@ pub enum Model {
     #[default]
     None,
     Portgraph(LoadedModel<PortGraph>),
+    Tket(LoadedModel<StaticSizeCircuit>),
+}
+
+impl std::fmt::Debug for Model {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Model::None => write!(f, "None"),
+            Model::Portgraph(..) => write!(f, "Loaded Portgraph model"),
+            Model::Tket(..) => write!(f, "Loaded Tket model"),
+        }
+    }
 }
 
 pub struct LoadedModel<G: pd::Graph> {
@@ -72,9 +84,10 @@ impl<G: pd::Graph> LoadedModel<G> {
         let mut selected_diffs = BTreeSet::new();
         let mut diff_id_to_ptr = Vec::new();
         for diff in all_diffs.all_nodes() {
-            if sinks.contains(&diff) {
-                selected_diffs.insert((diff_id_to_ptr.len() as u32).into());
-            }
+            // TODO: reactivate when extract_graph works properly
+            // if sinks.contains(&diff) {
+            //     selected_diffs.insert((diff_id_to_ptr.len() as u32).into());
+            // }
             diff_id_to_ptr.push(diff);
         }
         LoadedModel {
@@ -92,6 +105,12 @@ impl<G: pd::Graph> LoadedModel<G> {
         let diffs: Vec<_> = node_ids.map(|n| self.all_diffs.get_diff(n)).collect();
         PortDiff::are_compatible(&diffs)
     }
+
+    fn trim_selected(&mut self, n: usize) {
+        for _ in 0..n {
+            self.selected_diffs.pop_first();
+        }
+    }
 }
 
 impl Model {
@@ -100,19 +119,21 @@ impl Model {
         match self {
             Model::None => Ok(ViewModel::None),
             Model::Portgraph(model) => model.current_view(),
+            Model::Tket(model) => model.current_view(),
         }
     }
 
     pub fn load(&mut self, new_diffs: impl Into<SupportedGraphViews>) {
-        let loaded = match new_diffs.into() {
-            SupportedGraphViews::PortGraph(g) => LoadedModel::load(g),
+        *self = match new_diffs.into() {
+            SupportedGraphViews::PortGraph(g) => LoadedModel::load(g).into(),
+            SupportedGraphViews::Tket(circ) => LoadedModel::load(circ).into(),
         };
-        *self = Model::Portgraph(loaded);
     }
 
     pub fn set_selected(&mut self, ids: BTreeSet<DiffId>) {
         match self {
             Model::Portgraph(model) => model.selected_diffs = ids,
+            Model::Tket(model) => model.selected_diffs = ids,
             Model::None => return,
         }
     }
@@ -125,6 +146,7 @@ impl Model {
         match self {
             Model::None => true,
             Model::Portgraph(model) => model.are_compatible(),
+            Model::Tket(model) => model.are_compatible(),
         }
     }
 
@@ -132,11 +154,8 @@ impl Model {
     pub(crate) fn trim_selected(&mut self, n: usize) {
         match self {
             Model::None => return,
-            Model::Portgraph(model) => {
-                for _ in 0..n {
-                    model.selected_diffs.pop_first();
-                }
-            }
+            Model::Portgraph(model) => model.trim_selected(n),
+            Model::Tket(model) => model.trim_selected(n),
         }
     }
 }

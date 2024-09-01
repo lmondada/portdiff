@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { EventVariantDeserializeData } from "shared_types/types/shared_types";
 
+export const GRAPH_FORMATS = ["portgraph", "tket"] as const;
+export type GraphFormat = (typeof GRAPH_FORMATS)[number];
+
 interface LoadViewProps {
-  loadData: (data: string, format: "portgraph") => void;
+  loadData: (data: string, format: GraphFormat) => void;
 }
 
 const LoadView: React.FC<LoadViewProps> = ({ loadData }) => {
-  const [fileFormat, setFileFormat] = useState<"portgraph">("portgraph");
+  const [fileFormat, setFileFormat] = useState<GraphFormat>("portgraph");
 
   return (
     <section className="bg-white shadow-md rounded-lg p-8 m-5 w-full max-w-md">
@@ -14,9 +17,13 @@ const LoadView: React.FC<LoadViewProps> = ({ loadData }) => {
         <select
           className="flex-grow bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={fileFormat}
-          onChange={(e) => setFileFormat(e.target.value as "portgraph")}
+          onChange={(e) => setFileFormat(e.target.value as GraphFormat)}
         >
-          <option value="portgraph">Portgraph</option>
+          {GRAPH_FORMATS.map((format) => (
+            <option key={format} value={format}>
+              {format.charAt(0).toUpperCase() + format.slice(1)}
+            </option>
+          ))}
         </select>
         <input
           type="file"
