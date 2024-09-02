@@ -10,6 +10,7 @@ export default function CircuitViewer({ circuitJson }: CircuitViewerProps) {
   React.useEffect(() => {
     const iframe = iframeRef.current;
     if (iframe && iframe.contentWindow) {
+      console.log("sending message");
       iframe.contentWindow.postMessage(
         {
           type: "updateCircuit",
@@ -24,7 +25,7 @@ export default function CircuitViewer({ circuitJson }: CircuitViewerProps) {
     <iframe
       ref={iframeRef}
       src="/circuit_viewer.html"
-      style={{ width: "100%", height: "500px", border: "none" }}
+      style={{ width: "100%", height: "100%", border: "none" }}
       title="Circuit Viewer"
     />
   );

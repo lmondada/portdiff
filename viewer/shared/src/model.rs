@@ -84,10 +84,9 @@ impl<G: pd::Graph> LoadedModel<G> {
         let mut selected_diffs = BTreeSet::new();
         let mut diff_id_to_ptr = Vec::new();
         for diff in all_diffs.all_nodes() {
-            // TODO: reactivate when extract_graph works properly
-            // if sinks.contains(&diff) {
-            //     selected_diffs.insert((diff_id_to_ptr.len() as u32).into());
-            // }
+            if sinks.contains(&diff) {
+                selected_diffs.insert((diff_id_to_ptr.len() as u32).into());
+            }
             diff_id_to_ptr.push(diff);
         }
         LoadedModel {
