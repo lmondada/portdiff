@@ -176,6 +176,7 @@ mod tests {
 
     #[rstest]
     #[case("circ_rewrite.json")]
+    #[case("circ_rewrite_2.json")]
     fn test_app_load_circuit(#[case] file_name: &str) {
         let app = AppTester::<PortDiffViewer, _>::default();
         let mut model = Model::None;
@@ -187,6 +188,7 @@ mod tests {
             },
             &mut model,
         );
+        dbg!(&updates);
         let Model::Tket(inner) = &model else {
             panic!("expected loaded model");
         };

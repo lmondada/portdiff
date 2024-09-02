@@ -135,54 +135,66 @@ expression: serialized
         "boundary": [
           [
             {
-              "node": 0,
-              "port": {
-                "Incoming": 0
+              "Site": {
+                "node": 0,
+                "port": {
+                  "Incoming": 0
+                }
               }
             },
             0
           ],
           [
             {
-              "node": 0,
-              "port": {
-                "Incoming": 1
+              "Site": {
+                "node": 0,
+                "port": {
+                  "Incoming": 1
+                }
               }
             },
             0
           ],
           [
             {
-              "node": 0,
-              "port": {
-                "Incoming": 2
+              "Site": {
+                "node": 0,
+                "port": {
+                  "Incoming": 2
+                }
               }
             },
             0
           ],
           [
             {
-              "node": 1,
-              "port": {
-                "Outgoing": 0
+              "Site": {
+                "node": 1,
+                "port": {
+                  "Outgoing": 0
+                }
               }
             },
             0
           ],
           [
             {
-              "node": 1,
-              "port": {
-                "Outgoing": 1
+              "Site": {
+                "node": 1,
+                "port": {
+                  "Outgoing": 1
+                }
               }
             },
             0
           ],
           [
             {
-              "node": 1,
-              "port": {
-                "Outgoing": 2
+              "Site": {
+                "node": 1,
+                "port": {
+                  "Outgoing": 2
+                }
               }
             },
             0

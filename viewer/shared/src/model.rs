@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, iter};
 
 use derive_more::From;
 use petgraph::visit::{EdgeRef, IntoEdgeReferences};
@@ -112,6 +112,20 @@ impl<G: pd::Graph> LoadedModel<G> {
     }
 }
 
+fn as_opt<V, E>(r: Result<Option<V>, E>) -> Option<Result<V, E>> {
+    match r {
+        Ok(None) => None,
+        Ok(Some(v)) => Some(Ok(v)),
+        Err(e) => Some(Err(e)),
+    }
+}
+
+fn is_acyclic(diffs: Vec<PortDiff<StaticSizeCircuit>>) -> bool {
+    let circ = PortDiff::extract_graph(diffs).unwrap();
+    let mut cmds = circ.commands();
+    iter::from_fn(|| as_opt(cmds.try_next())).all(|x| x.is_ok())
+}
+
 impl Model {
     /// Extract the current graph given by the selected diffs
     pub fn current_view(&self) -> Result<ViewModel, IncompatiblePortDiff> {
@@ -145,7 +159,16 @@ impl Model {
         match self {
             Model::None => true,
             Model::Portgraph(model) => model.are_compatible(),
-            Model::Tket(model) => model.are_compatible(),
+            Model::Tket(model) => {
+                model.are_compatible() && {
+                    let node_ids = model
+                        .selected_diffs
+                        .iter()
+                        .map(|diff| model.diff_id_to_ptr[diff.0 as usize]);
+                    let diffs: Vec<_> = node_ids.map(|n| model.all_diffs.get_diff(n)).collect();
+                    is_acyclic(diffs)
+                }
+            }
         }
     }
 

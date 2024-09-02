@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Expose `InvalidRewriteError`, `PortDiff::as_ptr`
 - Viewer support for experimental `StaticSizeCircuit`s diffs from `tket2`.
+- New `BoundaryPort` type. Boundaries can now be either sites or sentinel nodes, thus supporting rewrites to empty graphs.
 
 ### Changed
 - Graph::link_sites no longer returns the newly created edge.
+- `PortDiff::boundary_site` now returns `Option<BoundaryPort>`. Use `PortDiff::boundary_port` to get a `BoundaryPort` instead.
 
 ### Fixed
 - `PortDiff::opposite_ports` was returning duplicate ports.

@@ -100,10 +100,10 @@ impl<G: Graph> Clone for Port<G> {
 impl<G: Graph> Copy for Port<G> where G::Edge: Copy {}
 
 impl<G: Graph> Owned<Port<G>, G> {
-    pub fn site(&self) -> Site<G::Node, G::PortLabel> {
+    pub fn site(&self) -> Option<Site<G::Node, G::PortLabel>> {
         match self.data {
-            Port::Boundary(boundary) => self.owner.boundary_site(boundary).clone(),
-            Port::Bound(port) => self.owner.graph().get_port_site(port),
+            Port::Boundary(boundary) => self.owner.boundary_site(boundary).cloned(),
+            Port::Bound(port) => Some(self.owner.graph().get_port_site(port)),
         }
     }
 }
