@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Expose `InvalidRewriteError`, `PortDiff::as_ptr`
+- Viewer support for experimental `StaticSizeCircuit`s diffs from `tket2`.
 
 ### Changed
 - Graph::link_sites no longer returns the newly created edge.
 
 ### Fixed
 - `PortDiff::opposite_ports` was returning duplicate ports.
+- Rewrite failed for boundaries outside of region area.
 
 ## [0.1.1] - 2024-08-27
 

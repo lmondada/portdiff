@@ -137,6 +137,9 @@ impl<G: Graph> PortDiff<G> {
                 }
             }
             for b in diff.boundary_iter() {
+                if !subgraph.nodes().contains(&diff.boundary_site(b).node) {
+                    continue;
+                }
                 if !used_unbound_ports.remove(&b) {
                     let port = Port::Boundary(b);
                     let site = boundary_map(Owned {
