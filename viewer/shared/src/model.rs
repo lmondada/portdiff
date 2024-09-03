@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, iter};
+use std::collections::BTreeSet;
 
 use derive_more::From;
 use petgraph::visit::{EdgeRef, IntoEdgeReferences};

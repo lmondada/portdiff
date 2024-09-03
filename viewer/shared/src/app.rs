@@ -189,7 +189,7 @@ mod tests {
             &mut model,
         );
         dbg!(&updates);
-        let Model::Tket(inner) = &model else {
+        let Model::Tket(..) = &model else {
             panic!("expected loaded model");
         };
         let ViewModel::Loaded { .. } = app.view(&model) else {

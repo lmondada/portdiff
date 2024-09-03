@@ -397,6 +397,7 @@ mod tests {
     use crate::{
         port::Port,
         port_diff::tests::{parent_child_diffs, TestPortDiff},
+        Site,
     };
 
     use super::*;
