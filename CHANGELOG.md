@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `PortDiff::opposite_ports` was returning duplicate ports.
 - Rewrite failed for boundaries outside of region area.
+- `PortDiff::are_compatible` checks compatibility of all diffs in the graph view.
 
 ## [0.1.1] - 2024-08-27
 
