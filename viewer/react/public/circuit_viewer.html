@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit Viewer</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/pytket-circuit-renderer@0.9/dist/pytket-circuit-renderer.umd.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/pytket-circuit-renderer@0.9/dist/pytket-circuit-renderer.css">
+</head>
+
+<body>
+    <div id="circuit-viewer" class="pytket-circuit-display-container">
+        <div style="display: none">
+            <div id="circuit-json-to-display">{{circuitJson}}</div>
+        </div>
+        <circuit-display-container
+            :circuit-element-str="'#circuit-json-to-display'"
+            :init-render-options="initRenderOptions"
+        ></circuit-display-container>
+    </div>
+    <script>
+        const { createApp } = Vue;
+        const circuitDisplayContainer = window["pytket-circuit-renderer"].default;
+
+        console.log("drawing stuff");
+        const app = createApp({
+            components: { circuitDisplayContainer },
+            data() {
+                return {
+                    initRenderOptions: {},
+                };
+            },
+            mounted() {
+                window.addEventListener('message', this.handleMessage);
+            },
+            methods: {
+                handleMessage(event) {
+                    console.log("handleMessage");
+                    if (event.data.type === 'updateCircuit') {
+                        console.log(event.data);
+                        document.getElementById('circuit-json-to-display').textContent = event.data.circuitJson;
+                        this.$forceUpdate();
+                    }
+                }
+            }
+        });
+
+        app.config.unwrapInjectedRef = true;
+        app.mount('#circuit-viewer');
+    </script>
+</body>
+</html>

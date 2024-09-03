@@ -1,59 +1,71 @@
 import React from "react";
 
 interface DragDividerProps {
-    widthPercentage: number;
-    setWidthPercentage: (widthPercentage: number) => void;
+  heightPercentage: number;
+  setHeightPercentage: (heightPercentage: number) => void;
 }
 
 const DragDivider: React.FC<DragDividerProps> = ({
-    widthPercentage,
-    setWidthPercentage,
+  heightPercentage,
+  setHeightPercentage,
 }) => {
-    const [isDragging, setIsDragging] = React.useState(false);
+  const [isDragging, setIsDragging] = React.useState(false);
 
-    const handleMouseDown = () => {
-        setIsDragging(true);
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  React.useEffect(() => {
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (isDragging) {
+        const newHeightPercentage =
+          (moveEvent.clientY / window.innerHeight) * 100;
+        setHeightPercentage(newHeightPercentage);
+      }
     };
 
-    React.useEffect(() => {
-        const onMouseMove = (moveEvent: MouseEvent) => {
-            if (isDragging) {
-                const newWidthPercentage =
-                    (moveEvent.clientX / window.innerWidth) * 100;
-                setWidthPercentage(newWidthPercentage);
-            }
-        };
+    const onMouseUp = () => {
+      setIsDragging(false);
+    };
 
-        const onMouseUp = () => {
-            setIsDragging(false);
-        };
+    if (isDragging) {
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    }
 
-        if (isDragging) {
-            window.addEventListener("mousemove", onMouseMove);
-            window.addEventListener("mouseup", onMouseUp);
-        } else {
-            window.removeEventListener("mousemove", onMouseMove);
-            window.removeEventListener("mouseup", onMouseUp);
-        }
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [isDragging, setHeightPercentage]);
 
-        return () => {
-            window.removeEventListener("mousemove", onMouseMove);
-            window.removeEventListener("mouseup", onMouseUp);
-        };
-    }, [isDragging, setWidthPercentage]);
-
-    return (
+  return (
+    <>
+      {isDragging && (
         <div
-            style={{
-                width: "4px",
-                height: "100vh",
-                backgroundColor: "lightgray",
-                cursor: "ew-resize",
-                left: `${widthPercentage}%`,
-            }}
-            onMouseDown={handleMouseDown}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            cursor: "ns-resize",
+            zIndex: 9999,
+          }}
         />
-    );
+      )}
+      <div
+        style={{
+          height: "4px",
+          width: "100vw",
+          backgroundColor: "lightgray",
+          cursor: "ns-resize",
+          top: `${heightPercentage}%`,
+        }}
+        onMouseDown={handleMouseDown}
+      />
+    </>
+  );
 };
 
 export default DragDivider;

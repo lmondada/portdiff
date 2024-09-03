@@ -1,7 +1,7 @@
 pub mod app;
 pub mod capability;
 mod model;
-mod rfgraph;
+mod view_serialise;
 
 use lazy_static::lazy_static;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -9,6 +9,8 @@ use wasm_bindgen::prelude::wasm_bindgen;
 pub use crux_core::{bridge::Bridge, Core, Request};
 
 pub use app::*;
+
+pub use view_serialise::{RFEdge, RFGraph, RFNode};
 
 use model::{Model, ViewModel};
 

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Handle, Position, useUpdateNodeInternals } from "@xyflow/react";
 
-interface PortDiffNodeProps {
+interface PortgraphNodeProps {
   id: string;
   data: {
     label: string;
@@ -9,7 +9,7 @@ interface PortDiffNodeProps {
     numOutHandles: number;
   };
 }
-const PortDiffNode = ({ id, data }: PortDiffNodeProps) => {
+const PortgraphNode = ({ id, data }: PortgraphNodeProps) => {
   //   const updateNodeInternals = useUpdateNodeInternals();
 
   //   useEffect(() => {
@@ -52,4 +52,4 @@ const PortDiffNode = ({ id, data }: PortDiffNodeProps) => {
   );
 };
 
-export default PortDiffNode;
+export default PortgraphNode;

@@ -20,7 +20,7 @@ pub struct GraphView<G: Graph>(relrc::GraphView<PortDiffData<G>, EdgeData<G>>);
 
 /// A handle to a node in a graph view.
 #[derive(From, Into)]
-#[derive_where(Clone, Copy, PartialEq, Eq, PartialOrd, Ord; G: Graph)]
+#[derive_where(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord; G: Graph)]
 pub struct NodeId<G: Graph>(relrc::NodeId<PortDiffData<G>, EdgeData<G>>);
 
 impl<'a, G: Graph> From<&'a PortDiff<G>> for NodeId<G> {

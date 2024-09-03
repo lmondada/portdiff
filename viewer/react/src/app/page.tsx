@@ -17,7 +17,7 @@ import {
 } from "shared_types/types/shared_types";
 
 import { update } from "./core";
-import LoadView from "@/components/LoadView";
+import LoadView, { GRAPH_FORMATS, GraphFormat } from "@/components/LoadView";
 import MainView from "@/components/MainView";
 
 const Home: NextPage = () => {
@@ -39,7 +39,7 @@ const Home: NextPage = () => {
         initialized.current = true;
 
         init_core().then(() => {
-          update(new EventVariantDeserializeData(""), callbacks);
+          update(new EventVariantDeserializeData("", "portgraph"), callbacks);
         });
       }
     },
@@ -48,8 +48,8 @@ const Home: NextPage = () => {
   );
 
   const loadData = useCallback(
-    (data: string) => {
-      update(new EventVariantDeserializeData(data), callbacks);
+    (data: string, format: GraphFormat) => {
+      update(new EventVariantDeserializeData(data, format), callbacks);
     },
     [callbacks]
   );
@@ -63,6 +63,9 @@ const Home: NextPage = () => {
   );
 
   if (view instanceof ViewModelVariantLoaded) {
+    if (!GRAPH_FORMATS.includes(view.graph_type as any)) {
+      throw new Error("Graph type is not supported");
+    }
     console.log("hierarchy at main", view.hierarchy);
     console.log("selected at main", view.selected);
   }
@@ -77,6 +80,7 @@ const Home: NextPage = () => {
         {view instanceof ViewModelVariantLoaded ? (
           <MainView
             graph={view.graph}
+            graphType={view.graph_type as "portgraph" | "tket"}
             hierarchy={view.hierarchy}
             selected={view.selected}
             setSelected={setSelected}

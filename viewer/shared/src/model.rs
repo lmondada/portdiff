@@ -2,34 +2,49 @@ use std::collections::BTreeSet;
 
 use derive_more::From;
 use petgraph::visit::{EdgeRef, IntoEdgeReferences};
-use portdiff::{port_diff::IncompatiblePortDiff, GraphView, NodeId, PortDiff};
+use portdiff::{self as pd, port_diff::IncompatiblePortDiff, GraphView, NodeId, PortDiff};
 use portgraph::PortGraph;
 use serde::{Deserialize, Serialize};
+use tket2::static_circ::StaticSizeCircuit;
 
-use crate::{rfgraph::RFGraph, DiffId};
+use crate::{
+    view_serialise::{SupportedGraphViews, ViewSerialise},
+    DiffId,
+};
 
-type Diffs = GraphView<PortGraph>;
-type DiffPtr = NodeId<PortGraph>;
+type Diffs<G> = GraphView<G>;
+type DiffPtr<G> = NodeId<G>;
 
 #[derive(Default, From)]
 pub enum Model {
     #[default]
     None,
-    Loaded(LoadedModel),
+    Portgraph(LoadedModel<PortGraph>),
+    Tket(LoadedModel<StaticSizeCircuit>),
 }
 
-pub struct LoadedModel {
+impl std::fmt::Debug for Model {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Model::None => write!(f, "None"),
+            Model::Portgraph(..) => write!(f, "Loaded Portgraph model"),
+            Model::Tket(..) => write!(f, "Loaded Tket model"),
+        }
+    }
+}
+
+pub struct LoadedModel<G: pd::Graph> {
     pub(crate) selected_diffs: BTreeSet<DiffId>,
-    pub(crate) diff_id_to_ptr: Vec<DiffPtr>,
-    pub(crate) all_diffs: Diffs,
+    pub(crate) diff_id_to_ptr: Vec<DiffPtr<G>>,
+    pub(crate) all_diffs: Diffs<G>,
 }
 
 // TODO: Check if this is actually safe. We're overriding the safety check here.
 unsafe impl Send for Model {}
 unsafe impl Sync for Model {}
 
-impl LoadedModel {
-    fn extract_graph(&self) -> Result<PortGraph, IncompatiblePortDiff> {
+impl<G: pd::Graph> LoadedModel<G> {
+    fn extract_graph(&self) -> Result<G, IncompatiblePortDiff> {
         let node_ids = self
             .selected_diffs
             .iter()
@@ -42,10 +57,70 @@ impl LoadedModel {
         self.all_diffs.inner().edge_references().map(|e| {
             let (src, dst) = (e.source(), e.target());
             let find_pos =
-                |n: DiffPtr| self.diff_id_to_ptr.iter().position(|&id| id == n).unwrap() as u32;
+                |n: DiffPtr<G>| self.diff_id_to_ptr.iter().position(|&id| id == n).unwrap() as u32;
 
             (find_pos(src.into()).into(), find_pos(dst.into()).into()).into()
         })
+    }
+
+    fn current_view(&self) -> Result<ViewModel, IncompatiblePortDiff>
+    where
+        G: ViewSerialise,
+    {
+        let graph = self.extract_graph()?;
+        let graph_type = graph.graph_type();
+        let selected = self.selected_diffs.clone();
+        let hierarchy = self.hierarchy().collect();
+        Ok(ViewModel::Loaded {
+            graph: graph.to_json(),
+            graph_type,
+            selected,
+            hierarchy,
+        })
+    }
+
+    fn load(all_diffs: GraphView<G>) -> Self {
+        let sinks: BTreeSet<DiffPtr<G>> = all_diffs.sinks().map(|d| (&d).into()).collect();
+        let mut selected_diffs = BTreeSet::new();
+        let mut diff_id_to_ptr = Vec::new();
+        for diff in all_diffs.all_nodes() {
+            if sinks.contains(&diff) {
+                selected_diffs.insert((diff_id_to_ptr.len() as u32).into());
+            }
+            diff_id_to_ptr.push(diff);
+        }
+        LoadedModel {
+            selected_diffs,
+            diff_id_to_ptr,
+            all_diffs,
+        }
+    }
+
+    fn are_compatible(&self) -> bool {
+        let node_ids = self
+            .selected_diffs
+            .iter()
+            .map(|diff| self.diff_id_to_ptr[diff.0 as usize]);
+        let diffs: Vec<_> = node_ids.map(|n| self.all_diffs.get_diff(n)).collect();
+        PortDiff::are_compatible(&diffs)
+    }
+
+    fn trim_selected(&mut self, n: usize) {
+        for _ in 0..n {
+            self.selected_diffs.pop_first();
+        }
+    }
+}
+
+impl LoadedModel<StaticSizeCircuit> {
+    fn is_acyclic(&self) -> bool {
+        let node_ids = self
+            .selected_diffs
+            .iter()
+            .map(|diff| self.diff_id_to_ptr[diff.0 as usize]);
+        let diffs: Vec<_> = node_ids.map(|n| self.all_diffs.get_diff(n)).collect();
+        let circ = PortDiff::extract_graph(diffs).unwrap();
+        circ.is_acyclic()
     }
 }
 
@@ -54,40 +129,23 @@ impl Model {
     pub fn current_view(&self) -> Result<ViewModel, IncompatiblePortDiff> {
         match self {
             Model::None => Ok(ViewModel::None),
-            Model::Loaded(model) => {
-                let graph = RFGraph::from(&model.extract_graph()?);
-                let selected = model.selected_diffs.clone();
-                let hierarchy = model.hierarchy().collect();
-                Ok(ViewModel::Loaded {
-                    graph,
-                    selected,
-                    hierarchy,
-                })
-            }
+            Model::Portgraph(model) => model.current_view(),
+            Model::Tket(model) => model.current_view(),
         }
     }
 
-    pub fn load(&mut self, new_diffs: GraphView<PortGraph>) {
-        let sinks: BTreeSet<DiffPtr> = new_diffs.sinks().map(|d| (&d).into()).collect();
-        let mut selected_diffs = BTreeSet::new();
-        let mut diff_id_to_ptr = Vec::new();
-        for diff in new_diffs.all_nodes() {
-            if sinks.contains(&diff) {
-                selected_diffs.insert((diff_id_to_ptr.len() as u32).into());
-            }
-            diff_id_to_ptr.push(diff);
-        }
-        *self = LoadedModel {
-            selected_diffs,
-            diff_id_to_ptr,
-            all_diffs: new_diffs,
-        }
-        .into();
+    pub fn load(&mut self, new_diffs: impl Into<SupportedGraphViews>) {
+        *self = match new_diffs.into() {
+            SupportedGraphViews::PortGraph(g) => LoadedModel::load(g).into(),
+            SupportedGraphViews::Tket(circ) => LoadedModel::load(circ).into(),
+        };
     }
 
     pub fn set_selected(&mut self, ids: BTreeSet<DiffId>) {
-        if let Model::Loaded(model) = self {
-            model.selected_diffs = ids;
+        match self {
+            Model::Portgraph(model) => model.selected_diffs = ids,
+            Model::Tket(model) => model.selected_diffs = ids,
+            Model::None => return,
         }
     }
 
@@ -96,24 +154,19 @@ impl Model {
     }
 
     pub(crate) fn are_compatible(&self) -> bool {
-        let Self::Loaded(model) = self else {
-            return true;
-        };
-        let node_ids = model
-            .selected_diffs
-            .iter()
-            .map(|diff| model.diff_id_to_ptr[diff.0 as usize]);
-        let diffs: Vec<_> = node_ids.map(|n| model.all_diffs.get_diff(n)).collect();
-        PortDiff::are_compatible(&diffs)
+        match self {
+            Model::None => true,
+            Model::Portgraph(model) => model.are_compatible(),
+            Model::Tket(model) => model.are_compatible() && model.is_acyclic(),
+        }
     }
 
     /// Remove the first `n` elements from the selected diffs
     pub(crate) fn trim_selected(&mut self, n: usize) {
-        let Model::Loaded(model) = self else {
-            return;
-        };
-        for _ in 0..n {
-            model.selected_diffs.pop_first();
+        match self {
+            Model::None => return,
+            Model::Portgraph(model) => model.trim_selected(n),
+            Model::Tket(model) => model.trim_selected(n),
         }
     }
 }
@@ -123,7 +176,8 @@ pub enum ViewModel {
     #[default]
     None,
     Loaded {
-        graph: RFGraph,
+        graph: String,
+        graph_type: &'static str,
         hierarchy: Vec<HierarchyEdge>,
         selected: BTreeSet<DiffId>,
     },

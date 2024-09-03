@@ -1,12 +1,15 @@
 use crux_core::{render::Render, App};
 use derive_more::{From, Into};
+use portdiff::GraphView;
+use portgraph::PortGraph;
 use serde::{Deserialize, Serialize};
+use tket2::static_circ::StaticSizeCircuit;
 
 use crate::{capability::LogCapability, Model, ViewModel};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
-    DeserializeData(String),
+    DeserializeData { data: String, format: String },
     SetSelected(Vec<DiffId>),
 }
 
@@ -34,11 +37,23 @@ impl App for PortDiffViewer {
 
     fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
         match event {
-            Event::DeserializeData(data) => match serde_json::from_str(&data) {
-                Ok(diffs) => model.load(diffs),
-                Err(err) => {
-                    caps.log.error(format!("{:?}", err));
-                    model.clear()
+            Event::DeserializeData { data, format } => match format.as_str() {
+                "portgraph" => match serde_json::from_str::<GraphView<PortGraph>>(&data) {
+                    Ok(diffs) => model.load(diffs),
+                    Err(err) => {
+                        caps.log.error(format!("{:?}", err));
+                        model.clear()
+                    }
+                },
+                "tket" => match serde_json::from_str::<GraphView<StaticSizeCircuit>>(&data) {
+                    Ok(diffs) => model.load(diffs),
+                    Err(err) => {
+                        caps.log.error(format!("{:?}", err));
+                        model.clear()
+                    }
+                },
+                _ => {
+                    caps.log.error(format!("Unsupported format: {}", format));
                 }
             },
             Event::SetSelected(ids) => model.set_selected(ids.into_iter().collect()),
@@ -60,7 +75,12 @@ impl App for PortDiffViewer {
     }
 
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
-        model.current_view().unwrap()
+        model.current_view().unwrap_or(ViewModel::Loaded {
+            graph: "error".to_string(),
+            graph_type: "tket",
+            hierarchy: vec![],
+            selected: Default::default(),
+        })
     }
 }
 
@@ -71,7 +91,7 @@ mod tests {
     use crux_core::testing::AppTester;
     use rstest::rstest;
 
-    use crate::model::LoadedModel;
+    use crate::{model::LoadedModel, view_serialise::RFGraph};
 
     use super::*;
 
@@ -79,7 +99,13 @@ mod tests {
     fn test_app_empty() {
         let app = AppTester::<PortDiffViewer, _>::default();
         let mut model = Model::None;
-        app.update(Event::DeserializeData("".to_string()), &mut model);
+        app.update(
+            Event::DeserializeData {
+                data: "".to_string(),
+                format: "portgraph".to_string(),
+            },
+            &mut model,
+        );
         assert!(matches!(model, Model::None));
         let view = app.view(&model);
         assert!(matches!(view, ViewModel::None));
@@ -90,12 +116,13 @@ mod tests {
         let app = AppTester::<PortDiffViewer, _>::default();
         let mut model = Model::None;
         app.update(
-            Event::DeserializeData(
-                include_str!("../../../test_files/parent_child.json").to_string(),
-            ),
+            Event::DeserializeData {
+                data: include_str!("../../../test_files/parent_child.json").to_string(),
+                format: "portgraph".to_string(),
+            },
             &mut model,
         );
-        let Model::Loaded(LoadedModel {
+        let Model::Portgraph(LoadedModel {
             selected_diffs,
             all_diffs,
             ..
@@ -109,14 +136,17 @@ mod tests {
         let view = app.view(&model);
         let ViewModel::Loaded {
             graph,
+            graph_type,
             hierarchy,
             selected,
         } = view
         else {
             panic!("expected loaded view");
         };
+        let graph: RFGraph = serde_json::from_str(&graph).unwrap();
         assert_eq!(graph.nodes.len(), 4);
         assert_eq!(graph.edges.len(), 6);
+        assert_eq!(graph_type, "portgraph");
         assert_eq!(hierarchy, vec![(DiffId(0), DiffId(1)).into()]);
         assert_eq!(selected, BTreeSet::from([DiffId(1)]));
     }
@@ -130,12 +160,42 @@ mod tests {
         let mut model = Model::None;
         let file_path = format!("../../test_files/{}", file_name);
         app.update(
-            Event::DeserializeData(std::fs::read_to_string(&file_path).unwrap()),
+            Event::DeserializeData {
+                data: std::fs::read_to_string(&file_path).unwrap(),
+                format: "portgraph".to_string(),
+            },
             &mut model,
         );
-        let Model::Loaded(LoadedModel { .. }) = &model else {
+        let Model::Portgraph(LoadedModel { .. }) = &model else {
             panic!("expected loaded model");
         };
+        let ViewModel::Loaded { .. } = app.view(&model) else {
+            panic!("expected loaded view");
+        };
+    }
+
+    #[rstest]
+    #[case("circ_rewrite.json")]
+    #[case("circ_rewrite_2.json")]
+    fn test_app_load_circuit(#[case] file_name: &str) {
+        let app = AppTester::<PortDiffViewer, _>::default();
+        let mut model = Model::None;
+        let file_path = format!("../../test_files/{}", file_name);
+        let updates = app.update(
+            Event::DeserializeData {
+                data: std::fs::read_to_string(&file_path).unwrap(),
+                format: "tket".to_string(),
+            },
+            &mut model,
+        );
+        dbg!(&updates);
+        let Model::Tket(..) = &model else {
+            panic!("expected loaded model");
+        };
+        let ViewModel::Loaded { .. } = app.view(&model) else {
+            panic!("expected loaded view");
+        };
+        model.set_selected(BTreeSet::from([DiffId(0)]));
         let ViewModel::Loaded { .. } = app.view(&model) else {
             panic!("expected loaded view");
         };

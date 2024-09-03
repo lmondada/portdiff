@@ -1,6 +1,6 @@
 import { XYPosition, Node, Edge } from "@xyflow/react";
 import Dagre from "@dagrejs/dagre";
-import { RFEdge, RFGraph, RFNode } from "shared_types/types/shared_types";
+import { RFGraph, RFNode } from "shared_types/types/shared_types";
 import { Seq } from "shared_types/serde/types";
 
 export function computePositions<

@@ -1,8 +1,20 @@
 //! A wrapper around PortGraph for ReactFlow
 
 use portdiff::Graph;
-use portgraph as pg;
+use portgraph::{self as pg, PortGraph};
 use serde::{Deserialize, Serialize};
+
+use super::ViewSerialise;
+
+impl ViewSerialise for PortGraph {
+    fn graph_type(&self) -> &'static str {
+        "portgraph"
+    }
+
+    fn to_json(&self) -> String {
+        serde_json::to_string(&RFGraph::from(self)).unwrap()
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

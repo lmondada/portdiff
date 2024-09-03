@@ -1,13 +1,17 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use bimap::BiBTreeMap;
+use derive_more::From;
+use derive_where::derive_where;
 use petgraph::visit::{EdgeRef, IntoEdges};
+use union_find::{QuickUnionUf, UnionBySize, UnionFind};
 
 use crate::{
     port::{BoundPort, BoundaryIndex, EdgeEnd, Port, Site},
     Graph, GraphView, NodeId, PortDiff,
 };
 
-use super::{EdgeData, IncomingEdgeIndex, Owned, PortDiffData};
+use super::{BoundaryPort, EdgeData, IncomingEdgeIndex, Owned, PortDiffData};
 
 impl<G: Graph> PortDiff<G> {
     /// Squash all diffs in `graph` into a single equivalent diff.
@@ -38,50 +42,33 @@ impl<G: Graph> PortDiff<G> {
         for &diff_id in &all_nodes {
             let diff = graph.get_diff(diff_id);
             for bd_index in diff.boundary_iter() {
-                if !builder.contains(Owned::new(diff.boundary_site(bd_index).node, diff.clone())) {
-                    continue;
-                }
+                let old_boundary = diff.boundary_port(bd_index);
+                let new_boundary = match old_boundary {
+                    BoundaryPort::Site(site) => {
+                        if !builder.contains(Owned::new(site.node, diff.clone())) {
+                            // Site is outside of the rewritten region.
+                            continue;
+                        }
+                        builder
+                            .map_site(Owned::new(site.clone(), diff.clone()))
+                            .unwrap()
+                            .into()
+                    }
+                    sentinel @ BoundaryPort::Sentinel(_) => sentinel.clone(),
+                };
+
                 match try_resolve_port(Owned::new(bd_index, diff.clone()), &all_nodes) {
                     Ok(bound_port) => {
-                        let old_site = diff.boundary_site(bd_index);
-                        let new_site = builder
-                            .map_site(Owned::new(old_site.clone(), diff.clone()))
-                            .unwrap();
-                        resolved_ports_map.insert(bound_port, new_site);
+                        resolved_ports_map.insert(bound_port, new_boundary);
                     }
                     Err(boundary) => {
-                        let old_site = diff.boundary_site(bd_index);
-                        let new_site = builder
-                            .map_site(Owned::new(old_site.clone(), diff.clone()))
-                            .unwrap();
-                        builder.append_boundary(new_site, boundary);
+                        builder.append_boundary(new_boundary, boundary);
                     }
                 }
             }
         }
-        // For each resolved port, insert new edges
-        while let Some((parent_port, new_site)) = resolved_ports_map.pop_first() {
-            let parent_opp_port = parent_port.opposite();
-            let new_opp_site =
-                if let Some(new_opp_site) = resolved_ports_map.remove(&parent_opp_port) {
-                    // The new edge is between two new sites
-                    new_opp_site
-                } else {
-                    // Find (old) opposite site by following the edge in parent and
-                    // then translating to the new site with `node_map`
-                    builder.map_site(parent_opp_port.site()).expect(
-                    "a parent port was neither a boundary port nor a non-rewritten port in child",
-                )
-                };
-            match parent_port.data.end {
-                EdgeEnd::Left => {
-                    builder.graph.link_sites(new_site, new_opp_site);
-                }
-                EdgeEnd::Right => {
-                    builder.graph.link_sites(new_opp_site, new_site);
-                }
-            }
-        }
+
+        builder.add_boundary_edges(resolved_ports_map);
 
         builder.finish()
     }
@@ -118,7 +105,7 @@ fn try_resolve_port<G: Graph>(
 
 struct Builder<G: Graph> {
     /// The new boundary
-    boundary: Vec<(Site<G::Node, G::PortLabel>, IncomingEdgeIndex)>,
+    boundary: Vec<(BoundaryPort<G>, IncomingEdgeIndex)>,
     /// The new incoming edges and their parent
     incoming_edges: Vec<(PortDiff<G>, EdgeData<G>)>,
     /// For each parent, a map from the old edge index to the new edge index
@@ -188,19 +175,14 @@ impl<G: Graph> Builder<G> {
         }
     }
 
-    /// Add a new boundary site at `site`, identical to the boundary port given by
-    /// `port`.
-    fn append_boundary(
-        &mut self,
-        site: Site<G::Node, G::PortLabel>,
-        port: Owned<BoundaryIndex, G>,
-    ) {
+    /// Add a new boundary site at `site`, linked to the same parent port as `port`.
+    fn append_boundary(&mut self, boundary: BoundaryPort<G>, port: Owned<BoundaryIndex, G>) {
         let Owned { data: port, owner } = port;
         let edge_index = owner.incoming_edge_index(port).unwrap();
         let new_edge_index = self.edge_index_map[&(&owner).into()][&edge_index];
 
         // Add to boundary
-        self.boundary.push((site, new_edge_index));
+        self.boundary.push((boundary, new_edge_index));
 
         // Link the new boundary port to the parent port
         let new_index = self.boundary.len() - 1;
@@ -215,6 +197,39 @@ impl<G: Graph> Builder<G> {
     ) -> Option<Site<G::Node, G::PortLabel>> {
         let Owned { data: site, owner } = site;
         site.filter_map_node(|n| self.nodes_map.get(&(&owner).into())?.get(&n).copied())
+    }
+
+    /// Given a map from parent ports to boundary ports, find all boundary edges
+    /// that need to be added.
+    fn add_boundary_edges(
+        &mut self,
+        mut port_map: BTreeMap<Owned<BoundPort<G::Edge>, G>, BoundaryPort<G>>,
+    ) {
+        // Max capacity: worst case every boundar port maps to a non-boundary port
+        let mut uf = PortUF::with_capacity(port_map.len() * 2);
+
+        while let Some((parent_port, new_boundary)) = port_map.pop_first() {
+            let parent_opp_port = parent_port.opposite();
+            let new_opp_boundary = if let Some(new_opp_boundary) = port_map.remove(&parent_opp_port)
+            {
+                // The new edge is between two new sites
+                new_opp_boundary
+            } else {
+                // Find (old) opposite site by following the edge in parent and
+                // then translating to the new site with `node_map`
+                self.map_site(parent_opp_port.site()).expect(
+                    "a parent port was neither a boundary port nor a non-rewritten port in child",
+                ).into()
+            };
+            match parent_port.data.end {
+                EdgeEnd::Left => uf.union(new_boundary, new_opp_boundary),
+                EdgeEnd::Right => uf.union(new_opp_boundary, new_boundary),
+            }
+        }
+
+        for (site1, site2) in uf.into_pairs() {
+            self.graph.link_sites(site1, site2);
+        }
     }
 
     fn finish(self) -> PortDiff<G> {
@@ -234,4 +249,80 @@ impl<G: Graph> Builder<G> {
         };
         diff_nodes.contains_key(&node.data)
     }
+}
+
+/// Union-find data structure for gathering all boundary ports (sentinels).
+///
+/// At the end of the construction, each equivalence class should have exactly
+/// two non-sentinel elements.
+struct PortUF<G: Graph> {
+    uf_array: QuickUnionUf<UnionBySize>,
+    port_map: BiBTreeMap<UFItem<G>, usize>,
+    len: usize,
+}
+
+impl<G: Graph> PortUF<G> {
+    fn with_capacity(capacity: usize) -> Self {
+        Self {
+            uf_array: QuickUnionUf::new(capacity),
+            port_map: BiBTreeMap::default(),
+            len: 0,
+        }
+    }
+
+    fn get_index(&mut self, item: &UFItem<G>) -> usize {
+        if let Some(&index) = self.port_map.get_by_left(item) {
+            index
+        } else {
+            let new_index = self.len;
+            self.port_map.insert(item.clone(), new_index);
+            self.len += 1;
+            new_index
+        }
+    }
+
+    fn union(&mut self, left: BoundaryPort<G>, right: BoundaryPort<G>) {
+        let left = match left {
+            BoundaryPort::Site(site) => UFItem::Site(site, EdgeEnd::Left),
+            BoundaryPort::Sentinel(sentinel) => UFItem::Sentinel(sentinel),
+        };
+        let right = match right {
+            BoundaryPort::Site(site) => UFItem::Site(site, EdgeEnd::Right),
+            BoundaryPort::Sentinel(sentinel) => UFItem::Sentinel(sentinel),
+        };
+        let left_index = self.get_index(&left);
+        let right_index = self.get_index(&right);
+        self.uf_array.union(left_index, right_index);
+    }
+
+    fn into_pairs(
+        mut self,
+    ) -> impl Iterator<Item = (Site<G::Node, G::PortLabel>, Site<G::Node, G::PortLabel>)> {
+        let mut classes: BTreeMap<usize, Vec<(Site<G::Node, G::PortLabel>, EdgeEnd)>> =
+            BTreeMap::new();
+        for (port, i) in self.port_map.into_iter() {
+            let UFItem::Site(site, end) = port else {
+                continue;
+            };
+            let class = self.uf_array.find(i);
+            classes.entry(class).or_default().push((site, end));
+        }
+        classes.into_iter().map(|(_, mut sites)| {
+            assert_eq!(sites.len(), 2, "invalid sentinels");
+            let (site1, end1) = sites.remove(0);
+            let (site2, end2) = sites.remove(0);
+            match (end1, end2) {
+                (EdgeEnd::Left, EdgeEnd::Right) => (site1, site2),
+                (EdgeEnd::Right, EdgeEnd::Left) => (site2, site1),
+                _ => panic!("invalid sentinel pair"),
+            }
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, From)]
+#[derive_where(PartialEq, Eq, PartialOrd, Ord)]
+enum UFItem<G: Graph> {
+    Sentinel(usize),
+    Site(Site<G::Node, G::PortLabel>, EdgeEnd),
 }

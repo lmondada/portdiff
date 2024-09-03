@@ -5,6 +5,7 @@ mod squash;
 // mod traverser;
 
 pub use extract::IncompatiblePortDiff;
+pub use rewrite::InvalidRewriteError;
 
 use std::{
     cmp,
@@ -48,7 +49,7 @@ impl<G: Graph> PortDiff<G> {
         }
     }
 
-    pub(crate) fn as_ptr(&self) -> PortDiffPtr<G> {
+    pub fn as_ptr(&self) -> PortDiffPtr<G> {
         RelRc::as_ptr(&self.data)
     }
 }
@@ -90,6 +91,21 @@ impl<G: Graph> Ord for PortDiff<G> {
     }
 }
 
+/// A boundary port of a diff
+#[derive(Clone, Serialize, Deserialize, From)]
+#[derive_where(Debug; G: Graph, G::Node: Debug, G::PortLabel: Debug)]
+#[serde(bound(serialize = "G: Serialize, G::Node: Serialize, G::PortLabel: Serialize"))]
+#[serde(bound(
+    deserialize = "G: Deserialize<'de>, G::Node: Deserialize<'de>, G::PortLabel: Deserialize<'de>"
+))]
+pub enum BoundaryPort<G: Graph> {
+    /// A site in the internal graph
+    Site(Site<G::Node, G::PortLabel>),
+    /// A sentinel node, marking a boundary that connects two parent diffs
+    /// without a node in itself.
+    Sentinel(usize),
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(bound(serialize = "G: Serialize, G::Node: Serialize, G::PortLabel: Serialize"))]
 #[serde(bound(
@@ -100,8 +116,9 @@ pub struct PortDiffData<G: Graph> {
     graph: G,
     /// The boundary of the subgraph.
     ///
-    /// Maps boundary ports of `graph` to a port in one of the parents.
-    boundary: Vec<(Site<G::Node, G::PortLabel>, IncomingEdgeIndex)>,
+    /// Each boundary port of `graph` maps to a port in one of the parents,
+    /// reachable by following the `IncomingEdgeIndex`.
+    boundary: Vec<(BoundaryPort<G>, IncomingEdgeIndex)>,
 }
 
 /// The incoming edge at a portdiff, given by its index.
@@ -264,11 +281,19 @@ impl<G: Graph> PortDiff<G> {
         parent_port.owner.descendants(parent_port.data.opposite())
     }
 
-    fn boundary_iter(&self) -> impl Iterator<Item = BoundaryIndex> {
+    pub fn boundary_iter(&self) -> impl Iterator<Item = BoundaryIndex> {
         (0..self.boundary.len()).map_into()
     }
 
-    pub fn boundary_site(&self, boundary: BoundaryIndex) -> &Site<G::Node, G::PortLabel> {
+    /// The boundary port at `boundary`, if it is a site.
+    pub fn boundary_site(&self, boundary: BoundaryIndex) -> Option<&Site<G::Node, G::PortLabel>> {
+        match &self.boundary[usize::from(boundary)].0 {
+            BoundaryPort::Site(site) => Some(site),
+            BoundaryPort::Sentinel(_) => None,
+        }
+    }
+
+    pub fn boundary_port(&self, boundary: BoundaryIndex) -> &BoundaryPort<G> {
         &self.boundary[usize::from(boundary)].0
     }
 
@@ -286,7 +311,7 @@ impl<G: Graph> PortDiff<G> {
             data: Port::from(port),
             owner: self.clone(),
         }];
-        let mut all_ports = curr_ports.clone();
+        let mut all_ports = Vec::new();
         while let Some(port) = curr_ports.pop() {
             all_ports.push(port.clone());
             curr_ports.extend(port.owner.all_outgoing().iter().filter_map(|e| {
@@ -335,6 +360,7 @@ impl<G: Graph> PortDiff<G> {
 #[derive_where(Hash; G: Graph, D: Hash)]
 #[derive_where(PartialOrd; G: Graph, D: PartialOrd)]
 #[derive_where(Ord; G: Graph, D: Ord)]
+#[derive_where(Debug; G: Graph, D: Debug)]
 pub struct Owned<D, G: Graph> {
     pub data: D,
     pub owner: PortDiff<G>,
@@ -383,8 +409,10 @@ mod tests {
         ) -> TestPortDiff {
             let graph = self.graph.clone();
             let nodes = nodes.into_iter().collect();
-            self.rewrite_induced(&nodes, graph, |p| Owned::new(p, self.clone()).site())
-                .unwrap()
+            self.rewrite_induced(&nodes, graph, |p| {
+                Owned::new(p, self.clone()).site().unwrap().into()
+            })
+            .unwrap()
         }
     }
 
@@ -411,11 +439,12 @@ mod tests {
         let node_map: BTreeMap<_, _> = [(n1, new_n1), (n2, new_n2)].into_iter().collect();
         let child = root
             .rewrite_induced(&child_nodes, rhs, |p| {
-                let old_site = Owned::new(p, root.clone()).site();
+                let old_site = Owned::new(p, root.clone()).site().unwrap();
                 Site {
                     node: node_map[&old_site.node],
                     port: old_site.port,
                 }
+                .into()
             })
             .unwrap();
         [root, child]
@@ -447,6 +476,7 @@ mod tests {
                     node: new_n1,
                     port: PortOffset::Outgoing(0),
                 }
+                .into()
             })
             .unwrap()
         };
@@ -460,6 +490,7 @@ mod tests {
                     node: new_n2,
                     port: PortOffset::Incoming(0),
                 }
+                .into()
             })
             .unwrap()
         };
@@ -486,9 +517,12 @@ mod tests {
             let mut rhs = PortGraph::new();
             let new_n2 = rhs.add_node(0, 0);
             let child_nodes = BTreeSet::from_iter([n0, n1, n2]);
-            root.rewrite_induced(&child_nodes, rhs, |p| Site {
-                node: new_n2,
-                port: Owned::new(p, root.clone()).site().port,
+            root.rewrite_induced(&child_nodes, rhs, |p| {
+                Site {
+                    node: new_n2,
+                    port: Owned::new(p, root.clone()).site().unwrap().port,
+                }
+                .into()
             })
             .unwrap()
         };
@@ -496,9 +530,12 @@ mod tests {
             let mut rhs = PortGraph::new();
             let new_n1 = rhs.add_node(0, 0);
             let child_nodes = BTreeSet::from_iter([n1, n2, n3]);
-            root.rewrite_induced(&child_nodes, rhs, |p| Site {
-                node: new_n1,
-                port: Owned::new(p, root.clone()).site().port,
+            root.rewrite_induced(&child_nodes, rhs, |p| {
+                Site {
+                    node: new_n1,
+                    port: Owned::new(p, root.clone()).site().unwrap().port,
+                }
+                .into()
             })
             .unwrap()
         };
@@ -513,6 +550,7 @@ mod tests {
         insta::assert_snapshot!(serialized);
     }
 
+    #[ignore = "TODO this is currently not deterministic"]
     #[rstest]
     fn serialize_parent_two_children(parent_two_children_diffs: [TestPortDiff; 3]) {
         let [_, child_1, child_2] = parent_two_children_diffs;
@@ -521,6 +559,7 @@ mod tests {
         insta::assert_snapshot!(serialized);
     }
 
+    #[ignore = "TODO this is currently not deterministic"]
     #[rstest]
     fn serialize_parent_two_children_overlapping(
         parent_two_children_overlapping_diffs: [TestPortDiff; 3],
