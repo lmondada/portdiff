@@ -4,7 +4,7 @@ use bimap::BiBTreeMap;
 use thiserror::Error;
 
 use crate::{
-    port::{BoundPort, EdgeEnd, Port, Site},
+    port::{BoundPort, EdgeEnd, Port},
     port_diff::IncomingEdgeIndex,
     subgraph::Subgraph,
     Graph, PortDiff,
