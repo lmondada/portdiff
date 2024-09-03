@@ -20,6 +20,7 @@ import { computePositions } from "@/app/place_graph";
 
 type HierarchyViewerProps = {
   hierarchy: HierarchyEdge[];
+  hierarchyNodeLabels: string[];
   selected: number[];
   setSelected: (selected: number[]) => void;
 };
@@ -99,6 +100,7 @@ function getStateSetters(setState: Dispatch<SetStateAction<State | null>>): {
 
 function HierarchyViewer({
   hierarchy,
+  hierarchyNodeLabels,
   selected,
   setSelected,
 }: HierarchyViewerProps) {
@@ -114,10 +116,14 @@ function HierarchyViewer({
           .map(({ parent, child }) => [parent.toString(), child.toString()])
           .flat()
       )
-    ).map((id) => ({ id, data: {}, type: "custom" }));
+    ).map((id) => ({
+      id,
+      data: { label: hierarchyNodeLabels[parseInt(id)] || "" },
+      type: "custom",
+    }));
     const edges = hierarchy.map(({ parent, child }) => ({
       id: `${parent}-${child}`,
-      type: "step",
+      type: "default", // Change this line from "step" to "default"
       source: parent.toString(),
       target: child.toString(),
     }));
@@ -206,7 +212,7 @@ const hierarchyNodeTypes: NodeTypes = {
   custom: HierarchyNodeViewer,
 };
 
-function HierarchyNodeViewer({}: { id: string }) {
+function HierarchyNodeViewer({ data }: { data: { label: string } }) {
   let className = `node rounded-full w-8 h-8 bg-white border border-black `;
   return (
     <div className={className}>
@@ -215,6 +221,7 @@ function HierarchyNodeViewer({}: { id: string }) {
         position={Position.Top}
         className="handle handle-top"
       />
+      <div className="text-center">{data.label}</div>
       <Handle
         type="source"
         position={Position.Bottom}

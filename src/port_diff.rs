@@ -266,6 +266,53 @@ impl<G: Graph> PortDiff<G> {
         parent_port.owner.descendants(parent_port.data.opposite())
     }
 
+    /// Resolve a port to a concrete port.
+    ///
+    /// In general, ports may refer to "BoundarySite::Wire"s, which are
+    /// phantom objects (noops) that link two edges together. This function
+    /// resolves such ports to a "concrete" port in a graph by following the
+    /// wire until it finds a real port. As a consequence, this may return 0, 1
+    /// or multiple ports.
+    ///
+    /// If the port is already a concrete port, it is returned as is.
+    pub fn resolve_port(&self, port: Port<G>) -> Vec<Owned<Port<G>, G>> {
+        let boundary = match port {
+            Port::Boundary(index) => index,
+            port @ Port::Bound(..) => {
+                return vec![Owned {
+                    data: port,
+                    owner: self.clone(),
+                }]
+            }
+        };
+        match self.boundary_site(boundary) {
+            BoundarySite::Site(..) => vec![Owned {
+                data: Port::Boundary(boundary),
+                owner: self.clone(),
+            }],
+            &BoundarySite::Wire { id, end } => {
+                let opp_site = BoundarySite::Wire {
+                    id,
+                    end: end.opposite(),
+                };
+                let Some(bd_index) = self
+                    .boundary_iter()
+                    .filter(|&bd| self.boundary_site(bd) == &opp_site)
+                    .at_most_one()
+                    .ok()
+                    .expect("found more than one wire end")
+                else {
+                    return Vec::new();
+                };
+                // Resolve recursively
+                self.opposite_ports(Port::Boundary(bd_index))
+                    .into_iter()
+                    .flat_map(|Owned { data, owner }| owner.resolve_port(data))
+                    .collect()
+            }
+        }
+    }
+
     pub fn boundary_iter(&self) -> impl Iterator<Item = BoundaryIndex> {
         (0..self.boundary.len()).map_into()
     }

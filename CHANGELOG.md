@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - tbd
 
+### Added
+- Add `PortDiff::resolve_boundary_index` to handle wire boundaries.
+
+### Changed
+- Redesigned boundary port abstraction. Use `BoundarySite::Wire` to represent a boundary not connected to a site.
+
 ## [0.2.0] - 2024-09-03
 
 ### Added

@@ -16,7 +16,7 @@ pub enum EdgeEnd {
 }
 
 impl EdgeEnd {
-    fn opposite(&self) -> Self {
+    pub fn opposite(&self) -> Self {
         match self {
             Self::Left => Self::Right,
             Self::Right => Self::Left,

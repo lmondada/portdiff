@@ -79,6 +79,7 @@ impl App for PortDiffViewer {
             graph: "error".to_string(),
             graph_type: "tket",
             hierarchy: vec![],
+            hierarchy_node_labels: vec![],
             selected: Default::default(),
         })
     }
@@ -139,6 +140,7 @@ mod tests {
             graph_type,
             hierarchy,
             selected,
+            ..
         } = view
         else {
             panic!("expected loaded view");
@@ -176,7 +178,7 @@ mod tests {
 
     #[rstest]
     #[case("circ_rewrite.json")]
-    #[case("circ_rewrite_2.json")]
+    #[case("circ_rewrite2.json")]
     fn test_app_load_circuit(#[case] file_name: &str) {
         let app = AppTester::<PortDiffViewer, _>::default();
         let mut model = Model::None;

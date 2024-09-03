@@ -82,6 +82,7 @@ const Home: NextPage = () => {
             graph={view.graph}
             graphType={view.graph_type as "portgraph" | "tket"}
             hierarchy={view.hierarchy}
+            hierarchyNodeLabels={view.hierarchy_node_labels}
             selected={view.selected}
             setSelected={setSelected}
           />

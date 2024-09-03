@@ -1,9 +1,9 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use derive_more::From;
 use petgraph::visit::{EdgeRef, IntoEdgeReferences};
 use portdiff::{self as pd, port_diff::IncompatiblePortDiff, GraphView, NodeId, PortDiff};
-use portgraph::PortGraph;
+use portgraph::{hierarchy, PortGraph};
 use serde::{Deserialize, Serialize};
 use tket2::static_circ::StaticSizeCircuit;
 
@@ -71,11 +71,13 @@ impl<G: pd::Graph> LoadedModel<G> {
         let graph_type = graph.graph_type();
         let selected = self.selected_diffs.clone();
         let hierarchy = self.hierarchy().collect();
+        let hierarchy_node_labels = vec![];
         Ok(ViewModel::Loaded {
             graph: graph.to_json(),
             graph_type,
             selected,
             hierarchy,
+            hierarchy_node_labels,
         })
     }
 
@@ -122,6 +124,23 @@ impl LoadedModel<StaticSizeCircuit> {
         let circ = PortDiff::extract_graph(diffs).unwrap();
         circ.is_acyclic()
     }
+
+    fn add_hierarchy_node_labels(&self, view: &mut ViewModel) {
+        if let ViewModel::Loaded {
+            hierarchy_node_labels,
+            ..
+        } = view
+        {
+            let diff_ptrs = self.diff_id_to_ptr.iter();
+            *hierarchy_node_labels = diff_ptrs
+                .map(|&ptr| self.all_diffs.get_diff(ptr))
+                .map(|diff| {
+                    let g = PortDiff::extract_graph(vec![diff]).unwrap();
+                    g.cx_count().to_string()
+                })
+                .collect();
+        }
+    }
 }
 
 impl Model {
@@ -130,7 +149,11 @@ impl Model {
         match self {
             Model::None => Ok(ViewModel::None),
             Model::Portgraph(model) => model.current_view(),
-            Model::Tket(model) => model.current_view(),
+            Model::Tket(model) => {
+                let mut view = model.current_view()?;
+                model.add_hierarchy_node_labels(&mut view);
+                Ok(view)
+            }
         }
     }
 
@@ -179,6 +202,7 @@ pub enum ViewModel {
         graph: String,
         graph_type: &'static str,
         hierarchy: Vec<HierarchyEdge>,
+        hierarchy_node_labels: Vec<String>,
         selected: BTreeSet<DiffId>,
     },
 }
