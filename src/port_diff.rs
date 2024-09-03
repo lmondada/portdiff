@@ -17,7 +17,7 @@ use std::{
 
 use crate::{
     graph::Graph,
-    port::{BoundPort, BoundaryIndex, Port},
+    port::{BoundPort, BoundaryIndex, BoundarySite, Port},
     subgraph::Subgraph,
 };
 use bimap::BiBTreeMap;
@@ -91,21 +91,6 @@ impl<G: Graph> Ord for PortDiff<G> {
     }
 }
 
-/// A boundary port of a diff
-#[derive(Clone, Serialize, Deserialize, From)]
-#[derive_where(Debug; G: Graph, G::Node: Debug, G::PortLabel: Debug)]
-#[serde(bound(serialize = "G: Serialize, G::Node: Serialize, G::PortLabel: Serialize"))]
-#[serde(bound(
-    deserialize = "G: Deserialize<'de>, G::Node: Deserialize<'de>, G::PortLabel: Deserialize<'de>"
-))]
-pub enum BoundaryPort<G: Graph> {
-    /// A site in the internal graph
-    Site(Site<G::Node, G::PortLabel>),
-    /// A sentinel node, marking a boundary that connects two parent diffs
-    /// without a node in itself.
-    Sentinel(usize),
-}
-
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(bound(serialize = "G: Serialize, G::Node: Serialize, G::PortLabel: Serialize"))]
 #[serde(bound(
@@ -118,7 +103,7 @@ pub struct PortDiffData<G: Graph> {
     ///
     /// Each boundary port of `graph` maps to a port in one of the parents,
     /// reachable by following the `IncomingEdgeIndex`.
-    boundary: Vec<(BoundaryPort<G>, IncomingEdgeIndex)>,
+    boundary: Vec<(BoundarySite<G>, IncomingEdgeIndex)>,
 }
 
 /// The incoming edge at a portdiff, given by its index.
@@ -286,14 +271,7 @@ impl<G: Graph> PortDiff<G> {
     }
 
     /// The boundary port at `boundary`, if it is a site.
-    pub fn boundary_site(&self, boundary: BoundaryIndex) -> Option<&Site<G::Node, G::PortLabel>> {
-        match &self.boundary[usize::from(boundary)].0 {
-            BoundaryPort::Site(site) => Some(site),
-            BoundaryPort::Sentinel(_) => None,
-        }
-    }
-
-    pub fn boundary_port(&self, boundary: BoundaryIndex) -> &BoundaryPort<G> {
+    pub fn boundary_site(&self, boundary: BoundaryIndex) -> &BoundarySite<G> {
         &self.boundary[usize::from(boundary)].0
     }
 

@@ -10,7 +10,7 @@ use crate::{
     Graph, PortDiff,
 };
 
-use super::{BoundaryPort, EdgeData, Owned, PortDiffData};
+use super::{BoundarySite, EdgeData, Owned, PortDiffData};
 
 #[derive(Error, Debug)]
 pub enum InvalidRewriteError {
@@ -34,7 +34,7 @@ impl<G: Graph> PortDiff<G> {
         nodes: impl IntoIterator<Item = Owned<G::Node, G>>,
         edges: impl IntoIterator<Item = (Owned<Port<G>, G>, Owned<Port<G>, G>)>,
         new_graph: G,
-        mut boundary_map: impl FnMut(Owned<Port<G>, G>) -> BoundaryPort<G>,
+        mut boundary_map: impl FnMut(Owned<Port<G>, G>) -> BoundarySite<G>,
     ) -> Result<Self, InvalidRewriteError> {
         // Collect nodes per portdiff
         let nodes: BTreeMap<_, BTreeSet<_>> =
@@ -137,7 +137,7 @@ impl<G: Graph> PortDiff<G> {
                 }
             }
             for b in diff.boundary_iter() {
-                let Some(site) = diff.boundary_site(b) else {
+                let Some(site) = diff.boundary_site(b).try_as_site_ref() else {
                     // Sentinel boundaries cannot be rewritten
                     continue;
                 };
@@ -189,7 +189,7 @@ impl<G: Graph> PortDiff<G> {
     pub fn rewrite_edges(
         edges: impl IntoIterator<Item = (Owned<Port<G>, G>, Owned<Port<G>, G>)> + Clone,
         new_graph: G,
-        boundary_map: impl FnMut(Owned<Port<G>, G>) -> BoundaryPort<G>,
+        boundary_map: impl FnMut(Owned<Port<G>, G>) -> BoundarySite<G>,
     ) -> Result<Self, InvalidRewriteError> {
         let nodes: BTreeSet<_> = edges
             .clone()
@@ -211,7 +211,7 @@ impl<G: Graph> PortDiff<G> {
         &self,
         nodes: &BTreeSet<G::Node>,
         new_graph: G,
-        mut boundary_map: impl FnMut(Port<G>) -> BoundaryPort<G>,
+        mut boundary_map: impl FnMut(Port<G>) -> BoundarySite<G>,
     ) -> Result<Self, InvalidRewriteError> {
         let edges = self
             .graph()
@@ -438,11 +438,15 @@ mod tests {
 
         let child_a_out0 = child_a
             .boundary_iter()
-            .find(|&bd| child_a.boundary_site(bd).unwrap().port == PortOffset::Outgoing(0))
+            .find(|&bd| {
+                child_a.boundary_site(bd).try_as_site_ref().unwrap().port == PortOffset::Outgoing(0)
+            })
             .unwrap();
         let child_b_in0 = child_b
             .boundary_iter()
-            .find(|&bd| child_b.boundary_site(bd).unwrap().port == PortOffset::Incoming(0))
+            .find(|&bd| {
+                child_b.boundary_site(bd).try_as_site_ref().unwrap().port == PortOffset::Incoming(0)
+            })
             .unwrap();
         let cross_edge = (
             Owned::new(Port::Boundary(child_a_out0), child_a.clone()),
