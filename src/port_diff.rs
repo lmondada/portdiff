@@ -206,9 +206,9 @@ impl<G: Graph> PortDiff<G> {
         self.data.all_incoming()
     }
 
-    // fn all_parents(&self) -> impl Iterator<Item = Self> + '_ {
-    //     self.data.all_parents().map(|p| p.clone().into()).unique()
-    // }
+    pub fn all_parents(&self) -> impl Iterator<Item = Self> + '_ {
+        self.data.all_parents().map(|p| p.clone().into()).unique()
+    }
 
     /// All outgoing edges.
     fn all_outgoing(&self) -> Vec<OutEdge<G>> {

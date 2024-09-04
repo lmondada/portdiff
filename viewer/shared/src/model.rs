@@ -131,12 +131,20 @@ impl LoadedModel<StaticSizeCircuit> {
             ..
         } = view
         {
+            let root_circ = self
+                .all_diffs
+                .all_nodes()
+                .map(|diff| self.all_diffs.get_diff(diff))
+                .find(|diff| diff.all_parents().next().is_none())
+                .unwrap();
+            let root_cx_count =
+                PortDiff::extract_graph(vec![root_circ]).unwrap().cx_count() as isize;
             let diff_ptrs = self.diff_id_to_ptr.iter();
             *hierarchy_node_labels = diff_ptrs
                 .map(|&ptr| self.all_diffs.get_diff(ptr))
                 .map(|diff| {
                     let g = PortDiff::extract_graph(vec![diff]).unwrap();
-                    g.cx_count().to_string()
+                    (g.cx_count() as isize - root_cx_count).to_string()
                 })
                 .collect();
         }

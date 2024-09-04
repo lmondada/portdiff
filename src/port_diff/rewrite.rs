@@ -390,7 +390,7 @@ mod tests {
     use insta::assert_snapshot;
     use itertools::Itertools;
     use portgraph::{
-        render::DotFormat, LinkMut, LinkView, PortGraph, PortMut, PortOffset, PortView,
+        render::DotFormat, LinkMut, LinkView, NodeIndex, PortGraph, PortMut, PortOffset, PortView,
     };
     use rstest::rstest;
 
@@ -475,5 +475,31 @@ mod tests {
         .unwrap();
         let pg: PortGraph = PortDiff::extract_graph([merged].to_vec()).unwrap();
         assert_snapshot!("extracted_graph_2", pg.dot_string());
+    }
+
+    #[rstest]
+    fn test_rewrite_empty(parent_child_diffs: [TestPortDiff; 2]) {
+        let [parent, _] = parent_child_diffs;
+        //          a --        -- d              a --- d
+        // Rewrite  a -- b -- c -- d      =>      a --- d
+        //          a --        -- d              a --- d
+        let rewritten = parent
+            .rewrite_induced(
+                &BTreeSet::from([NodeIndex::new(1), NodeIndex::new(2)]),
+                PortGraph::new(),
+                |p| {
+                    let Port::Bound(BoundPort { edge, end }) = p else {
+                        panic!("expected bound port")
+                    };
+                    BoundarySite::Wire {
+                        id: edge.out_offset().index(),
+                        end,
+                    }
+                },
+            )
+            .unwrap();
+        let g = PortDiff::extract_graph([rewritten].to_vec()).unwrap();
+        assert_eq!(g.node_count(), 2);
+        assert_eq!(g.link_count(), 3);
     }
 }
