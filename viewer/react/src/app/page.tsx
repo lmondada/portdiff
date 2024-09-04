@@ -20,6 +20,8 @@ import { update } from "./core";
 import LoadView, { GRAPH_FORMATS, GraphFormat } from "@/components/LoadView";
 import MainView from "@/components/MainView";
 
+export const BASE_URL = "/portdiff";
+
 const Home: NextPage = () => {
   const [view, setView] = useState<ViewModel>(new ViewModelVariantNone());
 
@@ -82,6 +84,7 @@ const Home: NextPage = () => {
             graph={view.graph}
             graphType={view.graph_type as "portgraph" | "tket"}
             hierarchy={view.hierarchy}
+            hierarchyNodeLabels={view.hierarchy_node_labels}
             selected={view.selected}
             setSelected={setSelected}
           />

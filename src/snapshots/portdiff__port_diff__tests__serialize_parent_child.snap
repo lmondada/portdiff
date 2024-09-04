@@ -3,9 +3,6 @@ source: src/port_diff.rs
 expression: serialized
 ---
 {
-  "sources": [
-    0
-  ],
   "sinks": [
     1
   ],

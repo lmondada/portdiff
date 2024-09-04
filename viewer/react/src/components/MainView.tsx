@@ -13,6 +13,7 @@ interface MainViewProps {
   graph: string;
   graphType: GraphFormat;
   hierarchy: HierarchyEdge[];
+  hierarchyNodeLabels: string[];
   selected: number[];
   setSelected: (selected: number[]) => void;
 }
@@ -21,6 +22,7 @@ const MainView: React.FC<MainViewProps> = ({
   graph,
   graphType,
   hierarchy,
+  hierarchyNodeLabels,
   selected,
   setSelected,
 }) => {
@@ -61,6 +63,7 @@ const MainView: React.FC<MainViewProps> = ({
       >
         <HierarchyViewer
           hierarchy={hierarchy}
+          hierarchyNodeLabels={hierarchyNodeLabels}
           selected={selected}
           setSelected={setSelected}
         />

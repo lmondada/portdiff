@@ -6,6 +6,6 @@ use tket2::static_circ::StaticSizeCircuit;
 
 #[derive(Clone, From)]
 pub enum SupportedGraphViews {
-    PortGraph(pd::GraphView<PortGraph>),
-    Tket(pd::GraphView<StaticSizeCircuit>),
+    PortGraph(pd::PortDiffGraph<PortGraph>),
+    Tket(pd::PortDiffGraph<StaticSizeCircuit>),
 }

@@ -1,10 +1,7 @@
-use crate::GraphView;
+use crate::PortDiffGraph;
 use itertools::Itertools;
-use petgraph::visit::{EdgeRef, IntoEdges};
 
 use crate::{Graph, PortDiff};
-
-use super::EdgeData;
 
 #[derive(Debug)]
 pub struct IncompatiblePortDiff;
@@ -16,7 +13,7 @@ impl<G: Graph> PortDiff<G> {
     {
         let graphs = diffs
             .into_iter()
-            .map(|d| GraphView::from_sinks(vec![d.clone()]))
+            .map(|d| PortDiffGraph::from_sinks(vec![d.clone()]))
             .collect_vec();
 
         if graphs.is_empty() {
@@ -35,16 +32,15 @@ impl<G: Graph> PortDiff<G> {
         // For each node that is an ancestor of two or more graphs...
         // TODO: this does not work
         // for diff_ptr in GraphView::lowest_common_ancestors(&graphs) {
-        for diff_ptr in merged_graph.all_nodes() {
-            // Check that its outgoing edges are compatible
-            // (this must hold everywhere, but already holds elsewhere as the
-            // set of outgoing edges in non-lca nodes remains unchanged).
-            let edges = merged_graph.inner().edges(diff_ptr.into()).collect_vec();
-            if !EdgeData::are_compatible(edges.iter().map(|e| e.weight())) {
-                return false;
-            }
-        }
-        true
+        // Check that its outgoing edges are compatible
+        // (this must hold everywhere, but already holds elsewhere as the
+        // set of outgoing edges in non-lca nodes remains unchanged).
+        //     let edges = merged_graph.inner().edges(diff_ptr.into()).collect_vec();
+        //     if !EdgeData::are_compatible(edges.iter().map(|e| e.weight())) {
+        //         return false;
+        //     }
+        // }
+        merged_graph.is_squashable()
     }
 
     pub fn extract_graph(diffs: Vec<PortDiff<G>>) -> Result<G, IncompatiblePortDiff> {
@@ -52,7 +48,7 @@ impl<G: Graph> PortDiff<G> {
             return Err(IncompatiblePortDiff);
         }
 
-        let graph = GraphView::from_sinks(diffs);
+        let graph = PortDiffGraph::from_sinks(diffs);
         let diff = PortDiff::squash(&graph);
         Ok(diff.try_unwrap_graph().unwrap())
     }

@@ -1,19 +1,22 @@
 //! Data types for ports
 
+use std::fmt::Debug;
+use std::hash::Hash;
+
 use derive_more::{From, Into};
 use derive_where::derive_where;
 use serde::{Deserialize, Serialize};
 
 use crate::{port_diff::Owned, Graph};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum EdgeEnd {
     Left,
     Right,
 }
 
 impl EdgeEnd {
-    fn opposite(&self) -> Self {
+    pub fn opposite(&self) -> Self {
         match self {
             Self::Left => Self::Right,
             Self::Right => Self::Left,
@@ -102,7 +105,7 @@ impl<G: Graph> Copy for Port<G> where G::Edge: Copy {}
 impl<G: Graph> Owned<Port<G>, G> {
     pub fn site(&self) -> Option<Site<G::Node, G::PortLabel>> {
         match self.data {
-            Port::Boundary(boundary) => self.owner.boundary_site(boundary).cloned(),
+            Port::Boundary(boundary) => self.owner.boundary_site(boundary).clone().try_into().ok(),
             Port::Bound(port) => Some(self.owner.graph().get_port_site(port)),
         }
     }
@@ -127,71 +130,61 @@ impl<E: Copy> BoundPort<E> {
             end: self.end.opposite(),
         }
     }
-
-    // pub(crate) fn to_parent_port<G: Graph<Edge = E>>(&self, owner: PortDiff<G>) -> ParentPort<G> {
-    //     ParentPort {
-    //         parent: owner,
-    //         port: *self,
-    //     }
-    // }
 }
 
-// impl<G: Graph> From<ParentPort<G>> for Port<G> {
-//     fn from(port: ParentPort<G>) -> Self {
-//         Self::Bound {
-//             port: port.port,
-//             owner: port.parent,
-//         }
+// impl<G: Graph> From<Site<G::Node, G::PortLabel>> for BoundarySite<G> {
+//     fn from(value: Site<G::Node, G::PortLabel>) -> Self {
+//         let site = Site {
+//             node: value.node,
+//             port: value.port,
+//         };
+//         Self(site)
 //     }
 // }
 
-// impl<G: Graph> Clone for ParentPort<G> {
-//     fn clone(&self) -> Self {
-//         ParentPort {
-//             parent: self.parent.clone(),
-//             port: self.port.clone(),
-//         }
-//     }
-// }
+impl<G: Graph> TryFrom<BoundarySite<G>> for Site<G::Node, G::PortLabel> {
+    type Error = BoundarySite<G>;
 
-// impl<G: Graph> ParentPort<G> {
-//     pub fn opposite(&self) -> Self {
-//         ParentPort {
-//             parent: self.parent.clone(),
-//             port: self.port.opposite(),
-//         }
-//     }
+    fn try_from(value: BoundarySite<G>) -> Result<Self, Self::Error> {
+        value.try_into_site()
+    }
+}
 
-//     pub fn children(&self) -> Ref<[ChildPort<G>]> {
-//         self.parent.children(self.port)
-//     }
-// }
+/// A site of a boundary port.
+///
+/// Either a site of the graph or a site on an "imaginary" wire. As many
+/// such wires can be created as needed. For any wire ID, there may be at
+/// most one site for each end. Wires should be assigned increasing indices
+/// starting from 0.
+#[derive(Serialize, Deserialize, From)]
+#[derive_where(PartialEq, Eq, PartialOrd, Ord, Clone; G: Graph)]
+#[derive_where(Debug; G: Graph, G::Node: Debug, G::PortLabel: Debug)]
+#[derive_where(Hash; G: Graph, G::Node: Hash, G::PortLabel: Hash)]
+#[serde(bound(
+    serialize = "G::Node: Serialize, G::PortLabel: Serialize",
+    deserialize = "G::Node: Deserialize<'de>, G::PortLabel: Deserialize<'de>"
+))]
+pub enum BoundarySite<G: Graph> {
+    Site(Site<G::Node, G::PortLabel>),
+    Wire { id: usize, end: EdgeEnd },
+}
 
-// impl<G: Graph> ChildPort<G> {
-//     pub fn is_upgradable(&self) -> bool {
-//         self.child.is_upgradable()
-//     }
+impl<G: Graph> BoundarySite<G> {
+    pub fn try_as_site_ref(&self) -> Option<&Site<G::Node, G::PortLabel>> {
+        match self {
+            Self::Site(site) => Some(site),
+            Self::Wire { .. } => None,
+        }
+    }
 
-//     pub fn upgrade(&self) -> Option<Port<G>> {
-//         Some(Port::Unbound {
-//             port: self.port.clone(),
-//             owner: self.child.upgrade()?,
-//         })
-//     }
-// }
+    pub fn try_into_site(self) -> Result<Site<G::Node, G::PortLabel>, Self> {
+        match self {
+            Self::Site(site) => Ok(site),
+            Self::Wire { .. } => Err(self),
+        }
+    }
 
-// impl<G: Graph> Port<G> {
-//     pub fn owner(&self) -> &PortDiff<G> {
-//         match self {
-//             Self::Unbound { owner, .. } => owner,
-//             Self::Bound { owner, .. } => owner,
-//         }
-//     }
-
-//     pub fn node(&self) -> G::Node {
-//         match self {
-//             Self::Unbound { port, .. } => port.node,
-//             Self::Bound { port, owner } => owner.graph().to_unbound(*port).node,
-//         }
-//     }
-// }
+    pub fn unwrap_site(self) -> Site<G::Node, G::PortLabel> {
+        self.try_into_site().ok().unwrap()
+    }
+}
