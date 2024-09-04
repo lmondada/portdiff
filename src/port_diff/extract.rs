@@ -1,10 +1,7 @@
 use crate::PortDiffGraph;
 use itertools::Itertools;
-use petgraph::visit::{EdgeRef, IntoEdges};
 
 use crate::{Graph, PortDiff};
-
-use super::EdgeData;
 
 #[derive(Debug)]
 pub struct IncompatiblePortDiff;
