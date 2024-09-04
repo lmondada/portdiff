@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add `PortDiff::resolve_boundary_index` to handle wire boundaries.
 - Add `PortDiffGraph::from_sinks_while` to create a `PortDiffGraph` from a predicate.
+- Add `PortDiffGraph::is_squashable` and `PortDiffGraph::try_squash` to check and squash compatible `PortDiffGraph`s.
 
 ### Changed
 - Redesigned boundary port abstraction. Use `BoundarySite::Wire` to represent a boundary not connected to a site.

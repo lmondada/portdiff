@@ -35,16 +35,15 @@ impl<G: Graph> PortDiff<G> {
         // For each node that is an ancestor of two or more graphs...
         // TODO: this does not work
         // for diff_ptr in GraphView::lowest_common_ancestors(&graphs) {
-        for diff_ptr in merged_graph.all_nodes() {
-            // Check that its outgoing edges are compatible
-            // (this must hold everywhere, but already holds elsewhere as the
-            // set of outgoing edges in non-lca nodes remains unchanged).
-            let edges = merged_graph.inner().edges(diff_ptr.into()).collect_vec();
-            if !EdgeData::are_compatible(edges.iter().map(|e| e.weight())) {
-                return false;
-            }
-        }
-        true
+        // Check that its outgoing edges are compatible
+        // (this must hold everywhere, but already holds elsewhere as the
+        // set of outgoing edges in non-lca nodes remains unchanged).
+        //     let edges = merged_graph.inner().edges(diff_ptr.into()).collect_vec();
+        //     if !EdgeData::are_compatible(edges.iter().map(|e| e.weight())) {
+        //         return false;
+        //     }
+        // }
+        merged_graph.is_squashable()
     }
 
     pub fn extract_graph(diffs: Vec<PortDiff<G>>) -> Result<G, IncompatiblePortDiff> {

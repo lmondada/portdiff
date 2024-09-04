@@ -2,11 +2,13 @@ use std::borrow::Borrow;
 
 use derive_more::{From, Into};
 use derive_where::derive_where;
+use itertools::Itertools;
+use petgraph::visit::{EdgeRef, IntoEdges};
 use relrc::RelRcGraph;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    port_diff::{EdgeData, PortDiffData},
+    port_diff::{EdgeData, IncompatiblePortDiff, PortDiffData},
     Graph, PortDiff,
 };
 
@@ -70,6 +72,30 @@ impl<G: Graph> PortDiffGraph<G> {
 
     pub fn lowest_common_ancestors(graphs: &[Self]) -> impl Iterator<Item = NodeId<G>> + '_ {
         RelRcGraph::lowest_common_ancestors(graphs).map(|n| n.into())
+    }
+
+    pub fn is_squashable(&self) -> bool {
+        for diff_ptr in self.all_nodes() {
+            // Check that its outgoing edges are compatible
+            // (this must hold everywhere, but already holds elsewhere as the
+            // set of outgoing edges in non-lca nodes remains unchanged).
+            let edges = self.inner().edges(diff_ptr.into()).collect_vec();
+            if !EdgeData::are_compatible(edges.iter().map(|e| e.weight())) {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// Squash all diffs in the graph view into a single equivalent diff.
+    ///
+    /// Errors if `is_squashable` returns false on `self`.
+    pub fn try_squash(&self) -> Result<PortDiff<G>, IncompatiblePortDiff> {
+        if !self.is_squashable() {
+            return Err(IncompatiblePortDiff);
+        }
+        let diff = PortDiff::squash(self);
+        Ok(diff)
     }
 }
 
