@@ -58,7 +58,7 @@ type State = {
   selectedNodesTracker: SelectedNodesTracker;
 };
 
-function getStateSetters(setState: Dispatch<SetStateAction<State | null>>): {
+function useStateSetters(setState: Dispatch<SetStateAction<State | null>>): {
   setNodes: (update: (nodes: State["nodes"]) => State["nodes"]) => void;
   setSelectedNodesTracker: (
     update: (
@@ -67,19 +67,8 @@ function getStateSetters(setState: Dispatch<SetStateAction<State | null>>): {
     ) => State["selectedNodesTracker"]
   ) => void;
 } {
-  return {
-    setNodes: (update: (nodes: State["nodes"]) => State["nodes"]) => {
-      setState((state) => {
-        if (state === null) {
-          return state;
-        }
-        return {
-          ...state,
-          nodes: update(state.nodes),
-        };
-      });
-    },
-    setSelectedNodesTracker: (
+  const setSelectedNodesTracker = useCallback(
+    (
       update: (
         nodes: State["nodes"],
         tracker: State["selectedNodesTracker"]
@@ -95,6 +84,25 @@ function getStateSetters(setState: Dispatch<SetStateAction<State | null>>): {
         };
       });
     },
+    [setState]
+  );
+  const setNodes = useCallback(
+    (update: (nodes: State["nodes"]) => State["nodes"]) => {
+      setState((state) => {
+        if (state === null) {
+          return state;
+        }
+        return {
+          ...state,
+          nodes: update(state.nodes),
+        };
+      });
+    },
+    [setState]
+  );
+  return {
+    setNodes,
+    setSelectedNodesTracker,
   };
 }
 
@@ -106,7 +114,7 @@ function HierarchyViewer({
 }: HierarchyViewerProps) {
   const [state, setState] = useState<null | State>(null);
 
-  const { setNodes, setSelectedNodesTracker } = getStateSetters(setState);
+  const { setNodes, setSelectedNodesTracker } = useStateSetters(setState);
 
   // Reset state every time we get new props
   useEffect(() => {
