@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/app/page";
+import { BASE_URL } from "@/config";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { EventVariantDeserializeData } from "shared_types/types/shared_types";
 

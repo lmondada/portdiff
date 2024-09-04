@@ -20,8 +20,6 @@ import { update } from "./core";
 import LoadView, { GRAPH_FORMATS, GraphFormat } from "@/components/LoadView";
 import MainView from "@/components/MainView";
 
-export const BASE_URL = "";
-
 const Home: NextPage = () => {
   const [view, setView] = useState<ViewModel>(new ViewModelVariantNone());
 
