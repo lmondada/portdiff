@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/app/page";
+import { BASE_URL } from "@/config";
 import React from "react";
 
 interface CircuitViewerProps {

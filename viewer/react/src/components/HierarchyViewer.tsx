@@ -139,14 +139,14 @@ function HierarchyViewer({
       edges,
       selectedNodesTracker: new SelectedNodesTracker(selected),
     });
-  }, [hierarchy, selected]);
+  }, [hierarchy, hierarchyNodeLabels, selected]);
 
   // Watch changes to selected nodes...
   useEffect(() => {
     setSelectedNodesTracker((prevNodes, prevTracker) => {
       return prevTracker.updateNodes(prevNodes);
     });
-  }, [state?.nodes]);
+  }, [state?.nodes, setSelectedNodesTracker]);
 
   // ...and report them
   useEffect(() => {
@@ -162,7 +162,7 @@ function HierarchyViewer({
     } else {
       console.log("no selection change");
     }
-  }, [state?.selectedNodesTracker, setSelected]);
+  }, [state?.selectedNodesTracker, setSelected, state]);
 
   const viewHandlers = useGraphHandlers(setNodes);
 
