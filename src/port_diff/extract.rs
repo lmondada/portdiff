@@ -1,4 +1,4 @@
-use crate::GraphView;
+use crate::PortDiffGraph;
 use itertools::Itertools;
 use petgraph::visit::{EdgeRef, IntoEdges};
 
@@ -16,7 +16,7 @@ impl<G: Graph> PortDiff<G> {
     {
         let graphs = diffs
             .into_iter()
-            .map(|d| GraphView::from_sinks(vec![d.clone()]))
+            .map(|d| PortDiffGraph::from_sinks(vec![d.clone()]))
             .collect_vec();
 
         if graphs.is_empty() {
@@ -52,7 +52,7 @@ impl<G: Graph> PortDiff<G> {
             return Err(IncompatiblePortDiff);
         }
 
-        let graph = GraphView::from_sinks(diffs);
+        let graph = PortDiffGraph::from_sinks(diffs);
         let diff = PortDiff::squash(&graph);
         Ok(diff.try_unwrap_graph().unwrap())
     }

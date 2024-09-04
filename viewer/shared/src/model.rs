@@ -1,9 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use derive_more::From;
 use petgraph::visit::{EdgeRef, IntoEdgeReferences};
-use portdiff::{self as pd, port_diff::IncompatiblePortDiff, GraphView, NodeId, PortDiff};
-use portgraph::{hierarchy, PortGraph};
+use portdiff::{self as pd, port_diff::IncompatiblePortDiff, NodeId, PortDiff, PortDiffGraph};
+use portgraph::PortGraph;
 use serde::{Deserialize, Serialize};
 use tket2::static_circ::StaticSizeCircuit;
 
@@ -12,7 +12,7 @@ use crate::{
     DiffId,
 };
 
-type Diffs<G> = GraphView<G>;
+type Diffs<G> = PortDiffGraph<G>;
 type DiffPtr<G> = NodeId<G>;
 
 #[derive(Default, From)]
@@ -81,7 +81,7 @@ impl<G: pd::Graph> LoadedModel<G> {
         })
     }
 
-    fn load(all_diffs: GraphView<G>) -> Self {
+    fn load(all_diffs: PortDiffGraph<G>) -> Self {
         let sinks: BTreeSet<DiffPtr<G>> = all_diffs.sinks().map(|d| (&d).into()).collect();
         let mut selected_diffs = BTreeSet::new();
         let mut diff_id_to_ptr = Vec::new();

@@ -8,6 +8,6 @@ pub mod subgraph;
 pub mod portgraph;
 
 pub use graph::Graph;
-pub use graph_view::{GraphView, NodeId};
+pub use graph_view::{NodeId, PortDiffGraph};
 pub use port::{BoundPort, BoundarySite, EdgeEnd, Port, Site};
 pub use port_diff::{InvalidRewriteError, PortDiff};

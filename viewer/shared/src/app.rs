@@ -1,6 +1,6 @@
 use crux_core::{render::Render, App};
 use derive_more::{From, Into};
-use portdiff::GraphView;
+use portdiff::PortDiffGraph;
 use portgraph::PortGraph;
 use serde::{Deserialize, Serialize};
 use tket2::static_circ::StaticSizeCircuit;
@@ -38,14 +38,14 @@ impl App for PortDiffViewer {
     fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
         match event {
             Event::DeserializeData { data, format } => match format.as_str() {
-                "portgraph" => match serde_json::from_str::<GraphView<PortGraph>>(&data) {
+                "portgraph" => match serde_json::from_str::<PortDiffGraph<PortGraph>>(&data) {
                     Ok(diffs) => model.load(diffs),
                     Err(err) => {
                         caps.log.error(format!("{:?}", err));
                         model.clear()
                     }
                 },
-                "tket" => match serde_json::from_str::<GraphView<StaticSizeCircuit>>(&data) {
+                "tket" => match serde_json::from_str::<PortDiffGraph<StaticSizeCircuit>>(&data) {
                     Ok(diffs) => model.load(diffs),
                     Err(err) => {
                         caps.log.error(format!("{:?}", err));

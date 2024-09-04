@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add `PortDiff::resolve_boundary_index` to handle wire boundaries.
+- Add `PortDiffGraph::from_sinks_while` to create a `PortDiffGraph` from a predicate.
 
 ### Changed
 - Redesigned boundary port abstraction. Use `BoundarySite::Wire` to represent a boundary not connected to a site.
+- Rename `GraphView` to `PortDiffGraph` to better reflect its purpose.
 
 ## [0.2.0] - 2024-09-03
 

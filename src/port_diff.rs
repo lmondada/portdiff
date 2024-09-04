@@ -421,7 +421,7 @@ mod tests {
     use portgraph::{LinkMut, NodeIndex, PortGraph, PortMut, PortOffset};
     use rstest::{fixture, rstest};
 
-    use crate::{port::EdgeEnd, GraphView};
+    use crate::{port::EdgeEnd, PortDiffGraph};
 
     use super::*;
 
@@ -570,7 +570,7 @@ mod tests {
     #[rstest]
     fn serialize_parent_child(parent_child_diffs: [TestPortDiff; 2]) {
         let [_, child] = parent_child_diffs;
-        let graph = GraphView::from_sinks(vec![child]);
+        let graph = PortDiffGraph::from_sinks(vec![child]);
         let serialized = serde_json::to_string_pretty(&graph).unwrap();
         insta::assert_snapshot!(serialized);
     }
@@ -579,7 +579,7 @@ mod tests {
     #[rstest]
     fn serialize_parent_two_children(parent_two_children_diffs: [TestPortDiff; 3]) {
         let [_, child_1, child_2] = parent_two_children_diffs;
-        let graph = GraphView::from_sinks(vec![child_1, child_2]);
+        let graph = PortDiffGraph::from_sinks(vec![child_1, child_2]);
         let serialized = serde_json::to_string_pretty(&graph).unwrap();
         insta::assert_snapshot!(serialized);
     }
@@ -590,7 +590,7 @@ mod tests {
         parent_two_children_overlapping_diffs: [TestPortDiff; 3],
     ) {
         let [_, child_1, child_2] = parent_two_children_overlapping_diffs;
-        let graph = GraphView::from_sinks(vec![child_1, child_2]);
+        let graph = PortDiffGraph::from_sinks(vec![child_1, child_2]);
         let serialized = serde_json::to_string_pretty(&graph).unwrap();
         insta::assert_snapshot!(serialized);
     }

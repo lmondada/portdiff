@@ -5,7 +5,7 @@ use union_find::{QuickUnionUf, UnionBySize, UnionFind};
 
 use crate::{
     port::{BoundPort, BoundaryIndex, EdgeEnd, Port, Site},
-    Graph, GraphView, NodeId, PortDiff,
+    Graph, NodeId, PortDiff, PortDiffGraph,
 };
 
 use super::{BoundarySite, EdgeData, IncomingEdgeIndex, Owned, PortDiffData};
@@ -18,7 +18,7 @@ impl<G: Graph> PortDiff<G> {
     ///
     /// Note: this will panic if the diffs in `graph` are not compatible (the
     /// public-facing [Self::extract_graph] will check for compatibility first).
-    pub(crate) fn squash(graph: &GraphView<G>) -> Self {
+    pub(crate) fn squash(graph: &PortDiffGraph<G>) -> Self {
         let mut builder = Builder::new();
 
         // For each diff in `graph`, add the subgraph of the replacement graph
@@ -128,7 +128,7 @@ impl<G: Graph> Builder<G> {
     ///
     /// For each node in `graph`, store a map from nodes in the old graph to nodes
     /// in the new graph.
-    fn add_subgraphs(&mut self, graph: &GraphView<G>) {
+    fn add_subgraphs(&mut self, graph: &PortDiffGraph<G>) {
         for diff_id in graph.all_nodes() {
             let diff = graph.get_diff(diff_id);
             let mut nodes = diff.graph.nodes_iter().collect::<BTreeSet<_>>();
@@ -147,7 +147,7 @@ impl<G: Graph> Builder<G> {
     /// Collect all incoming edges into `graph` and flatten into a single list of edges.
     ///
     /// Store a map from the old edge indices to the new edge indices.
-    fn flatten_incoming_edges(&mut self, graph: &GraphView<G>) {
+    fn flatten_incoming_edges(&mut self, graph: &PortDiffGraph<G>) {
         let all_nodes = graph.all_nodes().collect::<BTreeSet<_>>();
         for &diff_id in &all_nodes {
             let mut edge_index_map = BTreeMap::new();
