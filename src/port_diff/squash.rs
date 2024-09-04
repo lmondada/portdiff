@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use itertools::Itertools;
 use petgraph::visit::{EdgeRef, IntoEdges};
 use union_find::{QuickUnionUf, UnionBySize, UnionFind};
 
@@ -277,9 +278,43 @@ impl<G: Graph> Builder<G> {
         }
 
         // Link all wires endpoints
-        for [left, right] in wires_opp_ends_root.into_values() {
+        for [left, right] in wires_opp_ends_root.values() {
             if let (Some(left), Some(right)) = (left, right) {
-                self.graph.link_sites(left, right);
+                self.graph.link_sites(left.clone(), right.clone());
+            }
+        }
+
+        // Merge wire boundaries: if a port is connected to a wire, which itself
+        // is connected to a boundary, then the boundary site must be replaced
+        // to a concrete site instead of the wire.
+        let boundary_wires = self
+            .boundary
+            .iter()
+            .enumerate()
+            .filter_map(|(i, (site, _))| match site {
+                BoundarySite::Site(_) => None,
+                &BoundarySite::Wire { end, id } => Some((i, id, end)),
+            })
+            .collect_vec(); // Tuples of boundary indices and wire ids + ends
+        for (i, id, end) in boundary_wires {
+            if id > max_wire_id {
+                continue; // not a wire we know anything about
+            }
+            let id = wires_uf.find(id);
+            let index = match end {
+                EdgeEnd::Left => 0,
+                EdgeEnd::Right => 1,
+            };
+            let Some(sites) = wires_opp_ends_root.get(&id) else {
+                continue;
+            };
+            assert!(
+                sites[1 - index].is_none(),
+                "found both a boundary and internal edge at same port"
+            );
+            if let Some(site) = sites[index].as_ref() {
+                // change away from wire to concrete site
+                self.boundary[i].0 = BoundarySite::Site(site.clone());
             }
         }
     }
