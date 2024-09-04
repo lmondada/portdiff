@@ -1,3 +1,4 @@
+import { BASE_URL } from "@/app/page";
 import React from "react";
 
 interface CircuitViewerProps {
@@ -24,7 +25,7 @@ export default function CircuitViewer({ circuitJson }: CircuitViewerProps) {
   return (
     <iframe
       ref={iframeRef}
-      src="/circuit_viewer.html"
+      src={`${BASE_URL}/circuit_viewer.html`}
       style={{ width: "100%", height: "100%", border: "none" }}
       title="Circuit Viewer"
     />
