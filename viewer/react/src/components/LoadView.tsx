@@ -1,6 +1,5 @@
 import { BASE_URL } from "@/config";
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { EventVariantDeserializeData } from "shared_types/types/shared_types";
 
 export const GRAPH_FORMATS = ["portgraph", "tket"] as const;
 export type GraphFormat = (typeof GRAPH_FORMATS)[number];
@@ -34,7 +33,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content, isVisible }) => {
   return (
     <div
       ref={tooltipRef}
-      className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-lg z-10"
+      className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-3 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800 text-sm rounded-lg shadow-lg z-10"
       style={{
         maxWidth: "90vw",
         width: "400px",
@@ -43,7 +42,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content, isVisible }) => {
     >
       <div className="relative">
         <div
-          className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full w-3 h-3 bg-gray-800 rotate-45"
+          className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full w-3 h-3 bg-gray-800 dark:bg-gray-200 rotate-45"
           style={{ marginLeft: -leftOffset }}
         ></div>
         {content}
@@ -54,9 +53,11 @@ const Tooltip: React.FC<TooltipProps> = ({ content, isVisible }) => {
 
 const ReadmeDescription: React.FC = () => {
   return (
-    <div className="bg-white shadow-md rounded-lg p-6 mt-6 w-full max-w-3xl">
-      <h2 className="text-xl font-semibold mb-4">About this Viewer</h2>
-      <p className="mb-4">
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mt-6 w-full max-w-3xl">
+      <h2 className="text-xl font-semibold mb-4 dark:text-white">
+        About this Viewer
+      </h2>
+      <p className="mb-4 dark:text-gray-300">
         This viewer visualizes the search space of rewrites for optimisations on
         graph domains, and in particular quantum circuits. Crucially, the search
         space is not the space of rewrites, but a powerset of it: multiple
@@ -64,15 +65,15 @@ const ReadmeDescription: React.FC = () => {
         of this work is the efficient representation of this large space, as
         well as:
       </p>
-      <ul className="list-disc pl-5 mb-4">
+      <ul className="list-disc pl-5 mb-4 dark:text-gray-300">
         <li>Fast pattern matching on the search space,</li>
         <li>Fast testing for compatibility of rewrites,</li>
         <li>
           Fast extraction of final results given a set of compatible rewrites.
         </li>
       </ul>
-      <h2 className="text-xl font-semibold mb-4">Usage</h2>
-      <p>
+      <h2 className="text-xl font-semibold mb-4 dark:text-white">Usage</h2>
+      <p className="dark:text-gray-300">
         Start by loading a file or selecting one of the provided examples. A
         hierarchy of rewrites will be loaded in the bottom pane, while the top
         pane shows the graph resulting from the application of the selected
@@ -124,12 +125,12 @@ const LoadView: React.FC<LoadViewProps> = ({ loadData }) => {
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 py-8">
-      <section className="bg-white shadow-md rounded-lg p-8 m-5 w-full max-w-md">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
+      <section className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-8 m-5 w-full max-w-md">
         <div className="flex flex-col space-y-4">
           <div className="flex flex-row items-center space-x-4">
             <select
-              className="flex-grow bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-grow bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
               value={fileFormat}
               onChange={(e) => setFileFormat(e.target.value as GraphFormat)}
             >
@@ -162,13 +163,13 @@ const LoadView: React.FC<LoadViewProps> = ({ loadData }) => {
               Load File
             </button>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             Looking for examples? Try{" "}
             {exampleInfo.map((example, index) => (
               <React.Fragment key={example.name}>
                 <span className="relative inline-block">
                   <button
-                    className="text-blue-500 hover:underline"
+                    className="text-blue-500 hover:underline dark:text-blue-400"
                     onClick={() => loadExampleFile(example.file)}
                     onMouseEnter={() => setActiveTooltip(example.name)}
                     onMouseLeave={() => setActiveTooltip(null)}

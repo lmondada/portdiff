@@ -221,7 +221,7 @@ const hierarchyNodeTypes: NodeTypes = {
 };
 
 function HierarchyNodeViewer({ data }: { data: { label: string } }) {
-  let className = `node rounded-full w-8 h-8 bg-white border border-black `;
+  let className = "node rounded-full w-8 h-8 bg-white border border-black";
   return (
     <div className={className}>
       <Handle
@@ -229,7 +229,7 @@ function HierarchyNodeViewer({ data }: { data: { label: string } }) {
         position={Position.Top}
         className="handle handle-top"
       />
-      <div className="text-center">{data.label}</div>
+      <div className="text-center text-black">{data.label}</div>
       <Handle
         type="source"
         position={Position.Bottom}
