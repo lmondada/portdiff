@@ -9,7 +9,7 @@ use crate::{
     Graph, NodeId, PortDiff, PortDiffGraph,
 };
 
-use super::{BoundarySite, EdgeData, IncomingEdgeIndex, Owned, PortDiffData};
+use super::{BoundarySite, EdgeData, IncomingEdgeIndex, IncompatiblePortDiff, Owned, PortDiffData};
 
 impl<G: Graph> PortDiff<G> {
     /// Squash all diffs in `graph` into a single equivalent diff.
@@ -76,7 +76,9 @@ impl<G: Graph> PortDiff<G> {
 
         builder.add_boundary_edges(resolved_ports_map);
 
-        builder.finish()
+        builder
+            .finish()
+            .expect("found incompatible diffs in GraphView")
     }
 }
 
@@ -319,8 +321,8 @@ impl<G: Graph> Builder<G> {
         }
     }
 
-    fn finish(self) -> PortDiff<G> {
-        PortDiff::new(
+    fn finish(self) -> Result<PortDiff<G>, IncompatiblePortDiff> {
+        PortDiff::try_with_parents(
             PortDiffData {
                 graph: self.graph,
                 boundary: self.boundary,

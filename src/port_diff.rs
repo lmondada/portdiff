@@ -40,13 +40,18 @@ pub struct PortDiff<G: Graph> {
 pub type PortDiffPtr<G> = *const relrc::node::InnerData<PortDiffData<G>, EdgeData<G>>;
 
 impl<G: Graph> PortDiff<G> {
-    fn new(
+    fn try_with_parents(
         data: PortDiffData<G>,
         parents: impl IntoIterator<Item = (PortDiff<G>, EdgeData<G>)>,
-    ) -> Self {
-        Self {
-            data: RelRc::with_parents(data, parents.into_iter().map(|(p, e)| (p.data, e))),
+    ) -> Result<Self, IncompatiblePortDiff> {
+        let parents = parents.into_iter().map(|(p, e)| (p.data, e)).collect_vec();
+        // Check that the subgraph nodes on the edges are compatible (i.e. all distinct)
+        if !EdgeData::are_compatible(parents.iter().map(|e| &e.1)) {
+            return Err(IncompatiblePortDiff);
         }
+        Ok(Self {
+            data: RelRc::with_parents(data, parents),
+        })
     }
 
     pub fn as_ptr(&self) -> PortDiffPtr<G> {
@@ -166,7 +171,7 @@ impl<G: Graph> PortDiff<G> {
     ///
     /// This will be a "root" in the diff hierarchy, as it has no ancestors.
     pub fn from_graph(graph: G) -> Self {
-        Self::new(
+        Self::try_with_parents(
             PortDiffData {
                 graph,
                 value: None,
@@ -174,6 +179,7 @@ impl<G: Graph> PortDiff<G> {
             },
             [],
         )
+        .unwrap()
     }
 
     pub fn graph(&self) -> &G {
@@ -254,7 +260,7 @@ impl<G: Graph> PortDiff<G> {
     /// There is no guarantee that the opposite end does not clash with `self`.
     ///
     /// TODO: return them in toposort order
-    pub fn opposite_ports<'a>(&self, port: Port<G>) -> Vec<Owned<Port<G>, G>>
+    pub fn opposite_ports<'a>(&self, port: Port<G>) -> impl Iterator<Item = Owned<Port<G>, G>>
     where
         G: 'a,
     {
@@ -334,24 +340,8 @@ impl<G: Graph> PortDiff<G> {
     }
 
     /// All the ports of descendants of `self` that map to `port`.
-    pub fn descendants(&self, port: BoundPort<G::Edge>) -> Vec<Owned<Port<G>, G>> {
-        let mut curr_ports = vec![Owned {
-            data: Port::from(port),
-            owner: self.clone(),
-        }];
-        let mut all_ports = Vec::new();
-        while let Some(port) = curr_ports.pop() {
-            all_ports.push(port.clone());
-            curr_ports.extend(port.owner.all_outgoing().iter().filter_map(|e| {
-                let port = e.value().map_to_child(&port.data)?;
-                let owner = e.target().clone().into();
-                Some(Owned {
-                    data: Port::from(port),
-                    owner,
-                })
-            }));
-        }
-        all_ports
+    pub fn descendants(&self, port: BoundPort<G::Edge>) -> impl Iterator<Item = Owned<Port<G>, G>> {
+        DescendantsIter::new(port, self.clone())
     }
 
     pub fn all_children(&self) -> impl Iterator<Item = PortDiff<G>> + '_ {
@@ -377,6 +367,38 @@ impl<G: Graph> PortDiff<G> {
     //         n == node && p == port
     //     })
     // }
+}
+
+struct DescendantsIter<G: Graph> {
+    curr_ports: Vec<Owned<Port<G>, G>>,
+}
+
+impl<G: Graph> DescendantsIter<G> {
+    fn new(port: impl Into<Port<G>>, owner: PortDiff<G>) -> Self {
+        let curr_ports = vec![Owned {
+            data: port.into(),
+            owner,
+        }];
+        Self { curr_ports }
+    }
+}
+
+impl<G: Graph> Iterator for DescendantsIter<G> {
+    type Item = Owned<Port<G>, G>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let port = self.curr_ports.pop()?;
+        self.curr_ports
+            .extend(port.owner.all_outgoing().iter().filter_map(|e| {
+                let port = e.value().map_to_child(&port.data)?;
+                let owner = e.target().clone().into();
+                Some(Owned {
+                    data: Port::from(port),
+                    owner,
+                })
+            }));
+        Some(port)
+    }
 }
 
 /// A piece of data along with its owning portdiff.

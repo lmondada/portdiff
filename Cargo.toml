@@ -45,7 +45,7 @@ anyhow = "1.0.79"
 crux_core = "0.8"
 serde = "1.0.204"
 portdiff = { path = "." }
-relrc = { version = "0.3.0-rc.1", features = ["petgraph"] }
+relrc = { version = "0.3.0-rc.2", features = ["petgraph"] }
 portgraph = { version = "0.12.2" }
 derive_more = "0.99.18"
 petgraph = "0.6.5"

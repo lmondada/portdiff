@@ -10,7 +10,7 @@ use crate::{
     Graph, PortDiff,
 };
 
-use super::{BoundarySite, EdgeData, Owned, PortDiffData};
+use super::{BoundarySite, EdgeData, IncompatiblePortDiff, Owned, PortDiffData};
 
 #[derive(Error, Debug)]
 pub enum InvalidRewriteError {
@@ -18,6 +18,14 @@ pub enum InvalidRewriteError {
     BoundPortsEdge(String),
     #[error("{0}")]
     InvalidEdge(String),
+    #[error("Overlapping parent diffs")]
+    IncompatiblePortDiff,
+}
+
+impl From<IncompatiblePortDiff> for InvalidRewriteError {
+    fn from(_: IncompatiblePortDiff) -> Self {
+        InvalidRewriteError::IncompatiblePortDiff
+    }
 }
 
 impl<G: Graph> PortDiff<G> {
@@ -180,7 +188,7 @@ impl<G: Graph> PortDiff<G> {
             boundary,
             value: None,
         };
-        Ok(PortDiff::new(data, parents))
+        PortDiff::try_with_parents(data, parents).map_err(Into::into)
     }
 
     /// Create a new diff that rewrites `edges` to `new_graph`.
@@ -254,12 +262,7 @@ fn check_valid_edge<G: Graph>(
     left: &Owned<Port<G>, G>,
     right: &Owned<Port<G>, G>,
 ) -> Result<(), InvalidRewriteError> {
-    match left
-        .owner
-        .opposite_ports(left.data)
-        .iter()
-        .find(|p| p == &right)
-    {
+    match left.owner.opposite_ports(left.data).find(|p| p == right) {
         Some(_) => Ok(()),
         None => Err(InvalidRewriteError::InvalidEdge(
             "Valid edges must have opposite ports".to_string(),
