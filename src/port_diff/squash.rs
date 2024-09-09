@@ -324,6 +324,7 @@ impl<G: Graph> Builder<G> {
             PortDiffData {
                 graph: self.graph,
                 boundary: self.boundary,
+                value: None,
             },
             self.incoming_edges,
         )

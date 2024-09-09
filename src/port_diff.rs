@@ -98,12 +98,14 @@ impl<G: Graph> Ord for PortDiff<G> {
 ))]
 pub struct PortDiffData<G: Graph> {
     /// The internal graph
-    graph: G,
+    pub(crate) graph: G,
     /// The boundary of the subgraph.
     ///
     /// Each boundary port of `graph` maps to a port in one of the parents,
     /// reachable by following the `IncomingEdgeIndex`.
-    boundary: Vec<(BoundarySite<G>, IncomingEdgeIndex)>,
+    pub(crate) boundary: Vec<(BoundarySite<G>, IncomingEdgeIndex)>,
+    /// Optionally an integer value associated with the diff. TODO: make this generic (or move out)
+    pub(crate) value: Option<usize>,
 }
 
 /// The incoming edge at a portdiff, given by its index.
@@ -167,6 +169,7 @@ impl<G: Graph> PortDiff<G> {
         Self::new(
             PortDiffData {
                 graph,
+                value: None,
                 boundary: Vec::new(),
             },
             [],
