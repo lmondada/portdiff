@@ -9,7 +9,7 @@ pub use rewrite::InvalidRewriteError;
 
 use std::{
     cmp,
-    collections::BTreeSet,
+    collections::{BTreeSet, HashMap},
     fmt::{self, Debug},
     hash::Hash,
     ops::Deref,
@@ -19,6 +19,7 @@ use crate::{
     graph::Graph,
     port::{BoundPort, BoundaryIndex, BoundarySite, Port},
     subgraph::Subgraph,
+    NodeId,
 };
 use bimap::BiBTreeMap;
 use derive_more::{From, Into};
@@ -42,21 +43,50 @@ pub type PortDiffPtr<G> = *const relrc::node::InnerData<PortDiffData<G>, EdgeDat
 impl<G: Graph> PortDiff<G> {
     fn try_with_parents(
         data: PortDiffData<G>,
-        parents: impl IntoIterator<Item = (PortDiff<G>, EdgeData<G>)>,
+        parents: Vec<(PortDiff<G>, EdgeData<G>)>,
     ) -> Result<Self, IncompatiblePortDiff> {
-        let parents = parents.into_iter().map(|(p, e)| (p.data, e)).collect_vec();
-        // Check that the subgraph nodes on the edges are compatible (i.e. all distinct)
-        if !EdgeData::are_compatible(parents.iter().map(|e| &e.1)) {
+        if !are_compatible(&parents) {
             return Err(IncompatiblePortDiff);
         }
         Ok(Self {
-            data: RelRc::with_parents(data, parents),
+            data: RelRc::with_parents(data, parents.into_iter().map(|(p, e)| (p.data, e))),
         })
     }
 
     pub fn as_ptr(&self) -> PortDiffPtr<G> {
         RelRc::as_ptr(&self.data)
     }
+}
+
+/// Check that a new PortDiff as a child of parents is valid
+///
+/// We check two things:
+///  - edges outgoing from the same parent are compatible.
+///  - all parents are compatible with each other.
+fn are_compatible<G: Graph>(parents: &[(PortDiff<G>, EdgeData<G>)]) -> bool {
+    let mut parents_map: HashMap<_, Vec<_>> = HashMap::new();
+    for (parent, edge_data) in parents {
+        parents_map
+            .entry(parent.clone())
+            .or_default()
+            .push(edge_data);
+    }
+    // The diffs up to the parents must be valid...
+    let Ok(graph) = PortDiff::try_merge(parents_map.keys().cloned()) else {
+        return false;
+    };
+    // ...and remain valid when adding the edges to the diff graph.
+    for (diff, edges) in parents_map {
+        let n: NodeId<_> = (&diff).into();
+        let graph_edges = graph
+            .inner()
+            .outgoing_edges(n.0)
+            .map(|e| graph.inner().get_edge(e).value());
+        if !EdgeData::are_compatible(edges.iter().copied().chain(graph_edges)) {
+            return false;
+        }
+    }
+    true
 }
 
 impl<G: Graph> Hash for PortDiff<G> {
@@ -120,6 +150,7 @@ pub struct PortDiffData<G: Graph> {
 pub struct IncomingEdgeIndex(usize);
 
 #[derive_where(Clone; G: Graph)]
+#[derive_where(Debug; G: Graph, G::Node: Debug, G::Edge: Debug)]
 pub struct EdgeData<G: Graph> {
     /// The parent subgraph that is rewritten.
     subgraph: Subgraph<G>,
@@ -177,7 +208,7 @@ impl<G: Graph> PortDiff<G> {
                 value: None,
                 boundary: Vec::new(),
             },
-            [],
+            vec![],
         )
         .unwrap()
     }

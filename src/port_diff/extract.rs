@@ -32,11 +32,12 @@ impl<G: Graph> PortDiff<G> {
     }
 
     pub fn extract_graph(diffs: Vec<PortDiff<G>>) -> Result<G, IncompatiblePortDiff> {
-        let graph = Self::try_merge(diffs)?;
+        let graph = Self::try_merge(diffs.clone())?;
         let diff = PortDiff::squash(&graph);
         Ok(diff.try_unwrap_graph().unwrap())
     }
 }
+
 #[cfg(feature = "portgraph")]
 #[cfg(test)]
 mod tests {

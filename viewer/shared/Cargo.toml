@@ -17,14 +17,17 @@ serde = { workspace = true, features = ["derive"] }
 lazy_static = "1.5.0"
 uniffi = "0.28.0"
 wasm-bindgen = "0.2.92"
-portdiff = { version = "0.3.1", features = ["portgraph"] }
+portdiff = { workspace = true, features = ["portgraph"] }
 relrc = { workspace = true, features = ["serde"] }
 portgraph = { workspace = true, features = ["serde"] }
 serde_json = "1.0.122"
 getrandom = { version = "0.2", features = ["js"] }
 derive_more = { workspace = true }
 petgraph = { workspace = true }
-tket2 = { rev = "9ed57c1", git = "https://github.com/CQCL/tket2", features = [
+# tket2 = { rev = "9ed57c1", git = "https://github.com/CQCL/tket2", features = [
+#     "portmatching",
+# ], default-features = false }
+tket2 = { path = "../../../tket2/tket2", features = [
     "portmatching",
 ], default-features = false }
 
