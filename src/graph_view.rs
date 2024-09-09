@@ -4,7 +4,7 @@ use derive_more::{From, Into};
 use derive_where::derive_where;
 use itertools::Itertools;
 use petgraph::visit::{EdgeRef, IntoEdges};
-use relrc::RelRcGraph;
+use relrc::{edge::InnerEdgeData, RelRcGraph};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -62,8 +62,37 @@ impl<G: Graph> PortDiffGraph<G> {
         self.0.get_node_rc(id.into()).into()
     }
 
-    pub fn merge(&mut self, other: Self) {
-        self.0.merge(other.0);
+    /// Merge two graphs.
+    ///
+    /// If `strategy` is `MergeStrategy::IgnoreConflicts`, conflicting edges are
+    /// ignored. If `strategy` is `MergeStrategy::FailOnConflicts`, conflicting
+    /// edges cause an error and the merge is not performed.
+    pub fn merge(
+        &mut self,
+        other: Self,
+        strategy: MergeStrategy,
+    ) -> Result<(), IncompatiblePortDiff> {
+        let merge_callback =
+            |_, self_edges: &[&InnerEdgeData<_, _>], other_edges: &[&InnerEdgeData<_, _>]| {
+                match strategy {
+                    MergeStrategy::IgnoreConflicts => Ok(()),
+                    MergeStrategy::FailOnConflicts => {
+                        if !EdgeData::are_compatible(
+                            self_edges
+                                .iter()
+                                .chain(other_edges.iter())
+                                .map(|e| e.value()),
+                        ) {
+                            Err(IncompatiblePortDiff)
+                        } else {
+                            Ok(())
+                        }
+                    }
+                }
+            };
+        self.0
+            .merge(other.0, merge_callback)
+            .map_err(|_| IncompatiblePortDiff)
     }
 
     pub fn inner(&self) -> &RelRcGraph<PortDiffData<G>, EdgeData<G>> {
@@ -117,4 +146,12 @@ impl<G: Graph> Borrow<RelRcGraph<PortDiffData<G>, EdgeData<G>>> for PortDiffGrap
     fn borrow(&self) -> &RelRcGraph<PortDiffData<G>, EdgeData<G>> {
         &self.0
     }
+}
+
+/// Strategy for merging two graphs.
+pub enum MergeStrategy {
+    /// Ignore conflicts and merge the graphs.
+    IgnoreConflicts,
+    /// Fail if conflicts are detected.
+    FailOnConflicts,
 }
