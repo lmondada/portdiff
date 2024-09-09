@@ -178,6 +178,7 @@ impl<G: Graph> PortDiff<G> {
         let data = PortDiffData {
             graph: new_graph,
             boundary,
+            value: None,
         };
         Ok(PortDiff::new(data, parents))
     }

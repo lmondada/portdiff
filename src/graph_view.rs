@@ -97,6 +97,20 @@ impl<G: Graph> PortDiffGraph<G> {
         let diff = PortDiff::squash(self);
         Ok(diff)
     }
+
+    /// Set the diff values and create a new `PortDiffGraph`.
+    ///
+    /// The returned graph is identical to `self`, except with the diff values
+    /// set to the values returned by `f`.
+    pub fn map_value(&self, f: impl Fn(&PortDiffData<G>) -> Option<usize>) -> PortDiffGraph<G> {
+        PortDiffGraph(self.0.map(
+            |n| PortDiffData {
+                value: f(n),
+                ..n.clone()
+            },
+            |e| e.clone(),
+        ))
+    }
 }
 
 impl<G: Graph> Borrow<RelRcGraph<PortDiffData<G>, EdgeData<G>>> for PortDiffGraph<G> {
