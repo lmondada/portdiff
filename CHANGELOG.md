@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add `InvalidRewriteError::IncompatiblePortDiff` variant.
 - Add `PortDiff::try_merge` to create merged graph of diffs.
+- Add `PortDiff::subgraph` to get the subgraph that is rewritten by a diff edge.
 
 ### Changed
 - `PortDiff::descendants` and `PortDiff::opposite_ports` return iterators instead of `Vec`s.

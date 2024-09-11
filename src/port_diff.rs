@@ -184,6 +184,11 @@ impl<G: Graph> EdgeData<G> {
 
         true
     }
+
+    /// The subgraph that is rewritten by this edge.    
+    pub fn subgraph(&self) -> &Subgraph<G> {
+        &self.subgraph
+    }
 }
 
 impl<G: Graph> Deref for PortDiff<G> {
