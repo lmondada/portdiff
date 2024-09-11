@@ -218,10 +218,6 @@ impl<G: Graph> PortDiff<G> {
         .unwrap()
     }
 
-    pub fn graph(&self) -> &G {
-        &self.graph
-    }
-
     pub fn try_unwrap_graph(self) -> Result<G, Self> {
         match RelRc::try_unwrap(self.data) {
             Ok(data) => Ok(data.graph),
@@ -434,6 +430,18 @@ impl<G: Graph> Iterator for DescendantsIter<G> {
                 })
             }));
         Some(port)
+    }
+}
+
+impl<G: Graph> PortDiffData<G> {
+    /// The replacement graph of the diff.
+    pub fn graph(&self) -> &G {
+        &self.graph
+    }
+
+    /// The value of the diff, if it is set.
+    pub fn value(&self) -> Option<usize> {
+        self.value
     }
 }
 
