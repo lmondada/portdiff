@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - tbd
+
+### Added
+- Add `InvalidRewriteError::IncompatiblePortDiff` variant.
+- Add `PortDiff::try_merge` to create merged graph of diffs.
+- Add `PortDiff::subgraph` to get the subgraph that is rewritten by a diff edge.
+- Add `PortDiff::value` to get the value of a diff.
+
+### Changed
+- `PortDiff::descendants` and `PortDiff::opposite_ports` return iterators instead of `Vec`s.
+- `PortDiffGraph::merge` takes a new `MergeStrategy` parameter to handle conflicts between diffs.
+- `PortDiff::graph()` is now a function of `PortDiffData::graph()`. Use `Deref` to get the graph.
+
 ## [0.3.1] - 2024-09-09
 
 ### Added

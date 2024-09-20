@@ -63,11 +63,12 @@ pub struct BoundaryIndex(usize);
 /// A port in the graph, either connected to an edge or marking a subgraph boundary.
 ///
 /// The port belongs to a site. There may be 0 or 1 edge connected to a port.
-#[derive(Debug, From, Serialize, Deserialize)]
+#[derive(From, Serialize, Deserialize)]
 #[serde(bound(
     serialize = "G::Edge: Serialize",
     deserialize = "G::Edge: Deserialize<'de>"
 ))]
+#[derive_where(Debug; G: Graph, G::Edge: Debug)]
 #[derive_where(PartialEq; G: Graph)]
 #[derive_where(Eq; G: Graph)]
 #[derive_where(PartialOrd; G: Graph)]

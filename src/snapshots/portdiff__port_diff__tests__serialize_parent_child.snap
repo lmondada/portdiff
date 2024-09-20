@@ -82,7 +82,8 @@ expression: serialized
           "port_count": 14,
           "link_count": 7
         },
-        "boundary": []
+        "boundary": [],
+        "value": null
       },
       "incoming": []
     },
@@ -196,7 +197,8 @@ expression: serialized
             },
             0
           ]
-        ]
+        ],
+        "value": null
       },
       "incoming": [
         {

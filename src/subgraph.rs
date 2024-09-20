@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::fmt::Debug;
 
 use crate::{
     port::{BoundPort, EdgeEnd},
@@ -9,6 +10,7 @@ use derive_where::derive_where;
 use serde::{Deserialize, Serialize};
 
 #[derive_where(Clone, Default; G: Graph)]
+#[derive_where(Debug; G: Graph, G::Node: Debug, G::Edge: Debug)]
 #[derive(Serialize, Deserialize)]
 #[serde(bound(
     serialize = "G::Node: Serialize, G::Edge: Serialize",

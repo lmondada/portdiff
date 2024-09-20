@@ -32,27 +32,38 @@ const Home: NextPage = () => {
     [setView]
   );
 
-  const initialized = useRef(false);
-  useEffect(
-    () => {
-      if (!initialized.current) {
-        initialized.current = true;
-
-        init_core().then(() => {
-          update(new EventVariantDeserializeData("", "portgraph"), callbacks);
-        });
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    /*once*/ []
-  );
-
   const loadData = useCallback(
     (data: string, format: GraphFormat) => {
       update(new EventVariantDeserializeData(data, format), callbacks);
     },
     [callbacks]
   );
+
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+
+      init_core().then(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get("type");
+        const data = urlParams.get("data");
+
+        if (type && data && (type === "portgraph" || type === "tket")) {
+          try {
+            const decodedData = decodeURIComponent(data);
+            const parsedData = JSON.parse(decodedData);
+            loadData(JSON.stringify(parsedData), type);
+          } catch (error) {
+            console.error("Error parsing URL data:", error);
+            update(new EventVariantDeserializeData("", "portgraph"), callbacks);
+          }
+        } else {
+          update(new EventVariantDeserializeData("", "portgraph"), callbacks);
+        }
+      });
+    }
+  }, [callbacks, loadData]);
 
   const setSelected = useCallback(
     (selected: number[]) => {
