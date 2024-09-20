@@ -4,7 +4,7 @@ use derive_more::{From, Into};
 use derive_where::derive_where;
 use itertools::Itertools;
 use petgraph::visit::{EdgeRef, IntoEdges};
-use relrc::{edge::InnerEdgeData, RelRcGraph};
+use relrc::{edge::InnerEdgeData, graph_view::RelRcGraphSerializer, RelRcGraph};
 use serde::{Deserialize, Serialize};
 
 use crate::{

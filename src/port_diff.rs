@@ -688,4 +688,95 @@ mod tests {
             assert!(parent.port_children(port).next().is_none());
         }
     }
+
+    impl Graph for () {
+        type Node = usize;
+
+        type Edge = ();
+
+        type PortLabel = ();
+
+        fn nodes_iter(&self) -> impl Iterator<Item = Self::Node> + '_ {
+            [].into_iter()
+        }
+
+        fn edges_iter(&self) -> impl Iterator<Item = Self::Edge> + '_ {
+            [].into_iter()
+        }
+
+        fn get_port_site(
+            &self,
+            bound_port: BoundPort<Self::Edge>,
+        ) -> Site<Self::Node, Self::PortLabel> {
+            Site { node: 0, port: () }
+        }
+
+        fn get_bound_ports(
+            &self,
+            site: Site<Self::Node, Self::PortLabel>,
+        ) -> impl Iterator<Item = BoundPort<Self::Edge>> + '_ {
+            [].into_iter()
+        }
+
+        fn get_sites(
+            &self,
+            node: Self::Node,
+        ) -> impl Iterator<Item = Site<Self::Node, Self::PortLabel>> + '_ {
+            [].into_iter()
+        }
+
+        fn link_sites(
+            &mut self,
+            left: Site<Self::Node, Self::PortLabel>,
+            right: Site<Self::Node, Self::PortLabel>,
+        ) {
+        }
+
+        fn add_subgraph(
+            &mut self,
+            graph: &Self,
+            nodes: &BTreeSet<Self::Node>,
+        ) -> BTreeMap<Self::Node, Self::Node> {
+            [].into()
+        }
+    }
+
+    #[test]
+    fn test_compatible() {
+        let root = PortDiff::<()>::from_graph(());
+        let create_child = |parents: Vec<(PortDiff<()>, Vec<usize>)>| {
+            let parents = parents
+                .into_iter()
+                .map(|(diff, vec)| {
+                    let subgraph = Subgraph::new(&(), BTreeSet::from_iter(vec), Default::default());
+                    (
+                        diff,
+                        EdgeData {
+                            subgraph,
+                            port_map: Default::default(),
+                        },
+                    )
+                })
+                .collect_vec();
+            PortDiff::try_with_parents(
+                PortDiffData {
+                    graph: (),
+                    boundary: Default::default(),
+                    value: None,
+                },
+                parents,
+            )
+        };
+        let c1 = create_child(vec![(root.clone(), vec![0, 1, 2])]).unwrap();
+        create_child(vec![(root.clone(), vec![0]), (c1.clone(), vec![0, 1])]).unwrap_err();
+        let c2 = create_child(vec![(root.clone(), vec![1, 2, 3])]).unwrap();
+        let c3 = create_child(vec![(root.clone(), vec![0]), (c2.clone(), vec![0, 1])]).unwrap();
+        create_child(vec![(c1.clone(), vec![0]), (c3.clone(), vec![0, 1])]).unwrap_err();
+        let c4 = create_child(vec![(root.clone(), vec![0]), (c2.clone(), vec![0, 1])]).unwrap();
+        create_child(vec![(root.clone(), vec![0]), (c3.clone(), vec![0, 1])]).unwrap_err();
+        create_child(vec![(c3.clone(), vec![0]), (c3.clone(), vec![0, 1])]).unwrap_err();
+        println!("before");
+        create_child(vec![(c4.clone(), vec![0]), (c2.clone(), vec![2])]).unwrap();
+        create_child(vec![(c4.clone(), vec![0]), (c2.clone(), vec![2, 1])]).unwrap_err();
+    }
 }
